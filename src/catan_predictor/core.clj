@@ -6,9 +6,21 @@
 (def build-type #{"village" "road" "city"})
 (def areas-types #{"forest" "pastures" "fields" "hills" "mountains"})
 
+
+;;-----------------------------AREA----------------------------------------------------
 ;Area present area in basic catan game, using atom to present features of one area
 ; :position- :position on field of game, :type - areas-type, spot1 to spot 6 present spot on border of area
 ; and road presents borders of area
+; one area in game is like:
+;            spot1___road12___spot2
+;                /            \road23
+;         road61/              \
+;         spot6/     kind       \spot3
+;              \                /
+;         road56\              /road34
+;                \            /
+;            spot5---road45---spot4
+;
 (def area (atom {:position nil
                  :type nil
                  :spot1 nil
@@ -20,7 +32,15 @@
                  :road12 nil
                  :road23 nil
                  :road34 nil
-                 :road56 nil}))
+                 :road56 nil
+                 :road61 nil}))
+
+(defn add-village
+  ;;add village on one spot of area
+  [area spot player]
+  (swap! area assoc spot player))
+
+
 
 (def deck-development-card
   {:knight 14
