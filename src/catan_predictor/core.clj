@@ -84,7 +84,11 @@
   [area spot type-of-building player]
   ;;add village on one spot of area
   ;; upgrade, add building type
-  (swap! area assoc spot {:type-of-building type-of-building :player player}))
+  ;; integrate blocking spot, if some spot is not nil,onliest than it could be change
+  (if (nil? (spot @area))
+  (swap! area assoc spot {:type-of-building type-of-building :player player})
+  nil)
+  )
 
 (defn add-type
   [area type]
@@ -93,15 +97,15 @@
   )
 
 ;; lock values in atom
-(def atom-example (atom {:value1 nil :value2 "value2" :value3 nil}))
-(defn lock-value1-if-value2-is-nit-nil
-  [atom-example new-value]
-  "Just example function to try to not change nil if value2 is not nil"
-  (if (not (nil? (:value2 @atom-example) ) )
-    (swap! atom-example assoc :value1 new-value)
-    "value2 is nil"
-    )
-    )
+(defn block-spots
+  [area spot type-of-building player]
+  "Blocking spot of area"
+  ((if (nil? ( spot @atom))
+    (add-building area spot @atom)
+    nil
+    ))
+  
+  )
 
 (def deck-development-card
   {:knight 14
