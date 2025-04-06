@@ -23,17 +23,17 @@
 ;
 (def area (atom {:position nil
                  :type nil
-                 :spot1 nil
-                 :spot2 nil
-                 :spot3 nil
-                 :spot4 nil
-                 :spot5 nil
-                 :spot6 nil
-                 :road12 nil
-                 :road23 nil
-                 :road34 nil
-                 :road56 nil
-                 :road61 nil}))
+                 :spots (mapv (fn [n] {:spot-name (str "spot" n)
+                                       :connected-spot nil
+                                       :belonging nil
+                                       :type-of-building nil })
+                              (range 1 7))
+                 :paths (mapv (fn [[n m]] {:path-name (str "path" n m)
+                                       :spot-connection [n m]
+                                       :build? false
+                                       :player nil})
+                              [[1 2] [2 3] [3 4] [5 6] [6 1]])
+                 }))
 
 
 ;;-----------------------------BOARD----------------------------------------------------
@@ -78,13 +78,7 @@
                   }
                  ))
 
-(def spot (atom {:spot-name nil
-                 :connected-spot nil
-                 :belonging nil
-                 :type-of-building}))
-(def path (atom {:spot-connection [nil nil]
-                 :build? false
-                 :player nil}))
+
 
 ;; I will make hash-map where I will present [area spot] as key and [area spot] as connected area
 ;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
