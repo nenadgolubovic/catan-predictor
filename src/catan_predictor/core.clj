@@ -35,12 +35,61 @@
                  :road56 nil
                  :road61 nil}))
 
+
+;;-----------------------------BOARD----------------------------------------------------
+;; board should look like this
+;; -----------------------------
+;;               PLAYER1
+;;
+;;              /\ /\ /\
+;;             |1 |2 |3 |
+;;             /\ /\ /\ /\
+;;            |4 |5 |6 |7 |
+;;           /\ /\ /\ /\ /\
+;;  PLAYR4  |8 |9 |10|11|12|   PLAYER2
+;;           \/ \/ \/ \/ \/
+;;            |13|14|15|16|
+;;             \/ \/ \/ \/
+;;             |17|18|19|
+;;              \/ \/ \/
+;;
+;;               PLAYER2
+;; --------------------------
+(def board (atom {:area1
+                  :area1
+                  :area2
+                  :area3
+                  :area4
+                  :area5
+                  :area6
+                  :area7
+                  :area8
+                  :area9
+                  :area10
+                  :area11
+                  :area12
+                  :area13
+                  :area14
+                  :area15
+                  :area16
+                  :area17
+                  :area18
+                  :area19
+                  }
+                 ))
+
+
+
 (defn add-village
-  ;;add village on one spot of area
   [area spot player]
+  ;;add village on one spot of area
   (swap! area assoc spot player))
 
-
+(defn add-type
+  [area type]
+  ;add type to area
+  (swap! area assoc :type type)
+  )
 
 (def deck-development-card
   {:knight 14
