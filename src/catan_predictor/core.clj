@@ -80,10 +80,11 @@
 
 
 
-(defn add-village
-  [area spot player]
+(defn add-building
+  [area spot type-of-building player]
   ;;add village on one spot of area
-  (swap! area assoc spot player))
+  ;; upgrade, add building type
+  (swap! area assoc spot {:type-of-building type-of-building :player player}))
 
 (defn add-type
   [area type]
