@@ -21,19 +21,7 @@
 ;                \            /
 ;            spot5---road45---spot4
 ;
-(def area (atom {:position nil
-                 :type nil
-                 :spots (mapv (fn [n] {:spot-name (str "spot" n)
-                                       :connected-spot nil
-                                       :belonging nil
-                                       :type-of-building nil })
-                              (range 1 7))
-                 :paths (mapv (fn [[n m]] {:path-name (str "path" n m)
-                                       :spot-connection [n m]
-                                       :build? false
-                                       :player nil})
-                              [[1 2] [2 3] [3 4] [5 6] [6 1]])
-                 }))
+(def area (atom ))
 
 
 ;;-----------------------------BOARD----------------------------------------------------
@@ -46,7 +34,7 @@
 ;;             /\ /\ /\ /\
 ;;            |4 |5 |6 |7 |
 ;;           /\ /\ /\ /\ /\
-;;  PLAYR4  |8 |9 |10|11|12|   PLAYER2
+;;  PLAYER4 |8 |9 |10|11|12|   PLAYER2
 ;;           \/ \/ \/ \/ \/
 ;;            |13|14|15|16|
 ;;             \/ \/ \/ \/
@@ -55,28 +43,24 @@
 ;;
 ;;               PLAYER2
 ;; --------------------------
-(def board (atom {:area1
-                  :area1
-                  :area2
-                  :area3
-                  :area4
-                  :area5
-                  :area6
-                  :area7
-                  :area8
-                  :area9
-                  :area10
-                  :area11
-                  :area12
-                  :area13
-                  :area14
-                  :area15
-                  :area16
-                  :area17
-                  :area18
-                  :area19
-                  }
-                 ))
+(def board (atom {:areas
+                  (mapv (fn [n] {:area-name (str "area" n)
+                                   :position nil
+                                   :type nil
+                                   :spots (mapv (fn [n] {:spot-name (str "spot" n)
+                                                         :connected-spot nil
+                                                         :belonging nil
+                                                         :type-of-building nil })
+                                                (range 1 7))
+                                   :paths (mapv (fn [[n m]] {:path-name (str "path" n m)
+                                                             :spot-connection [n m]
+                                                             :build? false
+                                                             :player nil})
+                                                [[1 2] [2 3] [3 4] [5 6] [6 1]])
+                                   })
+                        (range 19))
+                  })
+                 )
 
 
 
