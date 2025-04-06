@@ -85,7 +85,6 @@
   ;;add village on one spot of area
   ;; upgrade, add building type
   ;; integrate blocking spot, if some spot is not nil,onliest than it could be change
-
   (let [current-value-of-spot (get @area spot)]
   (if (nil? current-value-of-spot)
   (swap! area assoc spot {:type-of-building "village" :player player})
@@ -99,7 +98,14 @@
       (swap! area update spot assoc :type-of-building "town")
       nil
       )))
-
+(defn upgrade-road
+  [area road player]
+  "Upgrade road"
+  (let [current-value-of-road (get @area road)]
+    (if (nil? current-value-of-road)
+      (swap! area assoc road player)
+      nil))
+  )
 (defn add-type
   [area type]
   ;add type to area
