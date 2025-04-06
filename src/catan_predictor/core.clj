@@ -80,15 +80,25 @@
 
 
 
-(defn add-building
-  [area spot type-of-building player]
+(defn upgrade-village
+  [area spot player]
   ;;add village on one spot of area
   ;; upgrade, add building type
   ;; integrate blocking spot, if some spot is not nil,onliest than it could be change
-  (if (nil? (spot @area))
-  (swap! area assoc spot {:type-of-building type-of-building :player player})
+
+  (let [current-value-of-spot (get @area spot)]
+  (if (nil? current-value-of-spot)
+  (swap! area assoc spot {:type-of-building "village" :player player})
   nil)
-  )
+  ))
+(defn upgrade-town
+  [area spot]
+  "Only upgrade village to town"
+  (let [current-value-of-spot (get-in @area [spot :type-of-building] )]
+    (if (= current-value-of-spot "village")
+      (swap! area update spot assoc :type-of-building "town")
+      nil
+      )))
 
 (defn add-type
   [area type]
@@ -96,16 +106,7 @@
   (swap! area assoc :type type)
   )
 
-;; lock values in atom
-(defn block-spots
-  [area spot type-of-building player]
-  "Blocking spot of area"
-  ((if (nil? ( spot @atom))
-    (add-building area spot @atom)
-    nil
-    ))
-  
-  )
+
 
 (def deck-development-card
   {:knight 14
