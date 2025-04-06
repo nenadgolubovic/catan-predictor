@@ -78,7 +78,14 @@
                   }
                  ))
 
+;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
+;; spot6 in area2 and spot3 in area1 is equivalent spot5 in area2
+;; for now I will only make when area1 has changed that automatically area2 change
 
+(defn upload-connected-area [[area1 spot1] [area2 spot2]]
+  (swap! area2 assoc spot2 (@area1 spot1))
+
+  )
 
 (defn upgrade-village
   [area spot player]
@@ -134,6 +141,6 @@
 
 
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
+  "I don't do a lot ... yet."
+  []
   (println "Hello, World!"))
