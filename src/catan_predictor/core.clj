@@ -13,11 +13,10 @@
    :monopoly 2
    :year-of-plenty 2})
 
-;;merge all cards in deck
-(def deck (apply concat (map (fn [[card count]] (repeat count card)) deck-development-card)))
-
-(def random-card (rand-nth deck))
-
+(defn random-card [deck]
+  ;; take random card from deck. Deck is argument, repeat - make list of values*keys, merging all sets of values*keys in one set,
+  ;; and take one card
+  (let [deck (apply concat (map (fn [[card count]] (repeat count card)) deck))] (rand-nth deck)))
 
 (defn value-card
   []
