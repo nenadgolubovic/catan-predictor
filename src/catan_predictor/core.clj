@@ -82,7 +82,6 @@
                  :connected-spot nil
                  :belonging nil
                  :type-of-building}))
-
 (def path (atom {:spot-connection [nil nil]
                  :build? false
                  :player nil}))
