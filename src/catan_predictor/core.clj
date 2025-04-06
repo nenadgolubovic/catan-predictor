@@ -92,6 +92,17 @@
   (swap! area assoc :type type)
   )
 
+;; lock values in atom
+(def atom-example (atom {:value1 nil :value2 "value2" :value3 nil}))
+(defn lock-value1-if-value2-is-nit-nil
+  [atom-example new-value]
+  "Just example function to try to not change nil if value2 is not nil"
+  (if (not (nil? (:value2 @atom-example) ) )
+    (swap! atom-example assoc :value1 new-value)
+    "value2 is nil"
+    )
+    )
+
 (def deck-development-card
   {:knight 14
    :victory-point 5
