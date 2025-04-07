@@ -71,11 +71,35 @@
 ;; If I put argument N equals 1 then only make one hexagon
 ;; If I put argument N equals 2 then make one hexagon and one layer of hexagons around that hexagon
 ;; If I put argument N equals 3 then make around that bigger hexagon one more hexagon layer (this is board of Catan)
+;; I will change a numeration of board
+;; I will present hexagon as (a,b)
+;; Central will be (0,0)
+;;
+;;              /  \ /  \
+;;             |1,0 |0,1 |
+;;            /  \ /  \ /  \
+;;           |1,-1|0,0 |-1,1|
+;;            \  / \  / \  /
+;;             |-1,0|0,-1|
+;;              \  / \  /
 
-
-
-
-
+;; I will try to do something with theory of graphs, maybe with matrix of distance
+;; matrix of hex graph
+;;    1
+;;  6/ \ 2
+;;  |   |
+;; 5 \ / 3
+;;    4
+;;
+;;    1 2 3 4 5 6
+;; 1[[0 1 2 3 2 1]
+;; 2 [1 0 1 2 3 2]
+;; 3 [2 1 0 1 2 3]
+;; 4 [3 2 1 0 1 2]
+;; 5 [2 3 2 1 0 1]
+;; 6 [1 2 3 2 1 0]]
+;;
+;;
 
 ;; I will make hash-map where I will present [area spot] as key and [area spot] as connected area
 ;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
