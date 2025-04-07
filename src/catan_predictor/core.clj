@@ -43,12 +43,14 @@
 ;;
 ;;               PLAYER2
 ;; --------------------------
+;; Board is good but have to think about that one spot could belong to 3 areas
 (def board (atom {:areas
                   (mapv (fn [n] {:area-name (str "area" n)
                                    :position nil
                                    :type nil
                                    :spots (mapv (fn [n] {:spot-name (str "spot" n)
-                                                         :connected-spot nil
+                                                         :connected-spot [(if (= n 6) 1 (inc n))
+                                                                          (if (= n 1) 6 (- n 1))]
                                                          :belonging nil
                                                          :type-of-building nil })
                                                 (range 1 7))
@@ -61,6 +63,17 @@
                         (range 19))
                   })
                  )
+
+
+;;Function above generate duplicates of spots,
+;; When I tried to illustrate I realize that board is made by hexagons, and when you merge all hexagons you get bigger hexagons
+;; So I will try to make function which will make hexagons with degree N
+;; If I put argument N equals 1 then only make one hexagon
+;; If I put argument N equals 2 then make one hexagon and one layer of hexagons around that hexagon
+;; If I put argument N equals 3 then make around that bigger hexagon one more hexagon layer (this is board of Catan)
+
+
+
 
 
 
