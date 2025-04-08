@@ -116,22 +116,26 @@
 ;; Center x,y = 0,0 ,
 ;; circle r = r
 ;; Spots are on angles 30,90, 150, 210,270,330, that is 30 + pi/3*k
-;; ke{1,2,3,4,5,6}
+;; ke{0,1,2,3,4,5}
 ;; x = r*cos((1+2k)/6*pi)
 ;; y = r*sin((1+2k)/6*pi)
 ;;
 ;; Make a hexagon
-(defn spots
-  [x y r]
-  ;;Make a spot for hexagon
-  (map )
-  )
 
+(defn round-5 [x] (/ (m/round (* x 10000)) 10000.0))
+(defn fcos [k r] (round-5 (* r (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6))))))
+(defn fsin [k r] (round-5 (* r (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6))))))
 
-(defn fcos [k r] (* r (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
-(defn fsin [k r] (* r (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
-(fcos 0 1)
-(fsin 0 1)
+(defn spots [x y r ks]
+  (map (fn [k]
+         [(+ x (fcos k r)) (+ y (fsin k r))]) ; Za svaku k vrednost izračunaj tačku
+       ks))
+
+(spots 0 0 1 [0 1 2 3 4 5])
+(def k [0 1 2 3 4 5])
+
+(fcos 9 1)
+(fsin 9 1)
 ;; I will make hash-map where I will present [area spot] as key and [area spot] as connected area
 ;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
 ;; spot6 in area2 and spot3 in area1 is equivalent spot5 in area2
