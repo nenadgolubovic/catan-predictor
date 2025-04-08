@@ -1,5 +1,6 @@
 (ns catan-predictor.core
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.math :as m]))
 
 (def recourses #{"wool" "brick" "wood" "ore" "grain"})
 (def development-card #{"knight" "victory-point" "road-building" "monopoly" "year-of-plenty"})
@@ -21,7 +22,7 @@
 ;                \            /
 ;            spot5---road45---spot4
 ;
-(def area (atom ))
+
 
 
 ;;-----------------------------BOARD----------------------------------------------------
@@ -83,7 +84,7 @@
 ;;             |-1,0|0,-1|
 ;;              \  / \  /
 
-;; I will try to do something with theory of graphs, maybe with matrix of distance
+;; I will try to do something with theory of graphs, maybe with matrix of neigbours
 ;; matrix of hex graph
 ;;    1
 ;;  6/ \ 2
@@ -92,6 +93,15 @@
 ;;    4
 ;;
 ;;    1 2 3 4 5 6
+;; 1[[0 1 0 0 0 1]
+;; 2 [1 0 1 0 0 0]
+;; 3 [0 1 0 1 0 0]
+;; 4 [0 0 1 0 1 0]
+;; 5 [0 0 0 1 0 1]
+;; 6 [1 0 0 0 1 0]]
+;;
+;; Matrix of distance
+;;    1 2 3 4 5 6
 ;; 1[[0 1 2 3 2 1]
 ;; 2 [1 0 1 2 3 2]
 ;; 3 [2 1 0 1 2 3]
@@ -99,8 +109,29 @@
 ;; 5 [2 3 2 1 0 1]
 ;; 6 [1 2 3 2 1 0]]
 ;;
-;;
+;; For existing problem we have 54 spots, I have to realize how to make graph
+;; I will fill manually until I find betters solution, and make for smaller "Catan" with 7 hexagons
 
+;; Try to make spots by x,y coordinate
+;; Center x,y = 0,0 ,
+;; circle r = r
+;; Spots are on angles 30,90, 150, 210,270,330, that is 30 + pi/3*k
+;; ke{1,2,3,4,5,6}
+;; x = r*cos((1+2k)/6*pi)
+;; y = r*sin((1+2k)/6*pi)
+;;
+;; Make a hexagon
+(defn spots
+  [x y r]
+  ;;Make a spot for hexagon
+  (map )
+  )
+
+
+(defn fcos [k r] (* r (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
+(defn fsin [k r] (* r (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
+(fcos 0 1)
+(fsin 0 1)
 ;; I will make hash-map where I will present [area spot] as key and [area spot] as connected area
 ;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
 ;; spot6 in area2 and spot3 in area1 is equivalent spot5 in area2
