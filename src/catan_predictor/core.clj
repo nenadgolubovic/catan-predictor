@@ -123,19 +123,29 @@
 ;; Make a hexagon
 
 (defn round-5 [x] (/ (m/round (* x 10000)) 10000.0))
-(defn fcos [k r] (round-5 (* r (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6))))))
-(defn fsin [k r] (round-5 (* r (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6))))))
+(defn fcos [k] (round-5 (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
+(defn fsin [k] (round-5 (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
 
-(defn spots [x y r ks]
+
+
+(defn spots [[x y] ks]
   (map (fn [k]
-         [(+ x (fcos k r)) (+ y (fsin k r))]) ; Za svaku k vrednost izračunaj tačku
+         [(+ x (fcos k )) (+ y (fsin k ))]) ; Za svaku k vrednost izračunaj tačku
        ks))
 
-(spots 0 0 1 [0 1 2 3 4 5])
-(def k [0 1 2 3 4 5])
+(spots [0 0] [0 1 2 3 4 5])
 
-(fcos 9 1)
-(fsin 9 1)
+
+
+(defn spots-to-spots
+  [[start-x start-y] [k]]
+  ;;I want to make hex on existing spots
+   (map (fn [[x y]] (spots [x y] [0 1 2 3 4 5])) (spots [start-x start-y] [0 1 2 3 4 5])))
+
+(spots-to-spots [0 0] [0 1 2 3 4 5])
+
+
+
 ;; I will make hash-map where I will present [area spot] as key and [area spot] as connected area
 ;; I am trying to automatic update area1 and area2, because spot2 in area1 is equivalent
 ;; spot6 in area2 and spot3 in area1 is equivalent spot5 in area2
