@@ -1,6 +1,8 @@
 (ns catan-predictor.core
   (:gen-class)
-  (:require [clojure.math :as m]))
+  (:require [clojure.math :as m]
+            [quil.core :as q]
+            ))
 
 (def recourses #{"wool" "brick" "wood" "ore" "grain"})
 (def development-card #{"knight" "victory-point" "road-building" "monopoly" "year-of-plenty"})
@@ -128,21 +130,58 @@
 
 
 
-(defn spots [[x y] ks]
-  (map (fn [k]
-         [(+ x (fcos k )) (+ y (fsin k ))]) ; Za svaku k vrednost izračunaj tačku
-       ks))
-
-(spots [0 0] [0 1 2 3 4 5])
-
-
-
 (defn spots-to-spots
-  [[start-x start-y] [k]]
-  ;;I want to make hex on existing spots
-   (map (fn [[x y]] (spots [x y] [0 1 2 3 4 5])) (spots [start-x start-y] [0 1 2 3 4 5])))
+  [[x y] k n]
+  ;; dec decrising n by 1 until n go to 0, if n 0 recursion stop
+  ;;
+  (if (zero? n)
+    []
+    (let [current-spots (spots [x y] k)]
+      (concat current-spots
+              (mapcat #(spots-to-spots % k (dec n)) current-spots)))))
 
-(spots-to-spots [0 0] [0 1 2 3 4 5])
+(def points (spots-to-spots [0 0]  [0 1 2 3 4 5] 5))
+
+(print points)
+
+;; To be easier I will make visualize
+;; Used https://github.com/quil/quil/blob/master/README.md
+;; ==========================================================================================
+
+
+(defn setup []
+  ; g/frame-rate - seconds to refresh plots when I make some changes
+  ; g/background - color of plot (= 0 black)
+  (q/frame-rate 30)
+  (q/background 0))
+
+(print points)
+(defn draw []
+  (doseq [[x y] points]
+    ;;Make plot with moved x and y coordinate , x by 750 and y by 500 to put on middle of chart
+    ;; (middle of value of size in scatter-plot func) and because spots is small order of magnitude from 0 to 1
+    ;; g/ellipse - type of spots
+    ;;g/height of graph (second argument in scatter-plot :size)
+    ;; (- (q/height) scaled-y) - in quil library The higher the number, the less it is in the picture.
+    (let [scaled-x (+ 750 (* x 50))
+          scaled-y (+ 500 (* y 50))]
+      (q/ellipse scaled-x (- (q/height) scaled-y) 10 10))))
+
+
+
+  (q/defsketch scatter-plot
+               :title "CATAN - Nenad"
+               :size [1500 1000]
+               :setup setup
+               :draw draw)
+
+
+;; ==========================================================================================
+
+
+
+
+
 
 
 
@@ -212,3 +251,4 @@
   "I don't do a lot ... yet."
   [& args]
   (println "Hello, World!"))
+
