@@ -47,27 +47,6 @@
 ;;               PLAYER2
 ;; --------------------------
 ;; Board is good but have to think about that one spot could belong to 3 areas
-(def board (atom {:areas
-                  (mapv (fn [n] {:area-name (str "area" n)
-                                   :position nil
-                                   :type nil
-                                   :spots (mapv (fn [n] {:spot-name (str "spot" n)
-                                                         :connected-spot [(if (= n 6) 1 (inc n))
-                                                                          (if (= n 1) 6 (- n 1))]
-                                                         :belonging nil
-                                                         :type-of-building nil })
-                                                (range 1 7))
-                                   :paths (mapv (fn [[n m]] {:path-name (str "path" n m)
-                                                             :spot-connection [n m]
-                                                             :build? false
-                                                             :player nil})
-                                                [[1 2] [2 3] [3 4] [5 6] [6 1]])
-                                   })
-                        (range 19))
-                  })
-                 )
-
-
 ;;Function above generate duplicates of spots,
 ;; When I tried to illustrate I realize that board is made by hexagons, and when you merge all hexagons you get bigger hexagons
 ;; So I will try to make function which will make hexagons with degree N
@@ -138,11 +117,14 @@
   [[x y] k n]
   ;; dec decrising n by 1 until n go to 0, if n 0 recursion stop
   ;;put distinct to avoud duplicates
+
+
+  (map #(vector (math-round (first %) 3) (math-round (second %) 3)) ;;this line round numbers on 3 decimals
   (distinct (if (zero? n)
               []
               (let [current-spots (spots [x y] k)]
                 (concat current-spots
-                        (mapcat #(spots-to-spots % k (dec n)) current-spots)))))
+                        (mapcat #(spots-to-spots % k (dec n)) current-spots))))))
 
   )
 ;;now I will try to paint red centers of areas
@@ -158,17 +140,30 @@
   (let [dist (m/sqrt (+ (m/pow x 2) (m/pow y 2)))]
     (math-round dist decimals)))
 ;;I realize that centers is on angels (k*pi/6) ke{0,1..12}
-;; centers are on 2cos(Pi/6) = 1.73 for first ring
+;; centers are on 2cos(0) = 2 for first ring)
 ;; for second ring
 
 (def points (spots-to-spots [0 0]  [0 1 2 3 4 5] 5))
 (print points)
 
-(defn centers [points]
-  "Centers will be every spot approximately 1.732 far away from the origin"
-   (map #(vector (math-round (first %) 3) (math-round (second %) 3)) (filter #(= (distance (first %) (second %) 3) 1.732) points)))
 
-(print (centers points))
+(defn centers [points x y]
+  "Centers will be every spot approximately 1.732 far away from the given [x y] point"
+  (let [target-distance 2.000]
+    (concat [[x y]](filter #(= (distance (- (first %) x) (- (second %) y) 3) target-distance) points))
+    ))
+
+(defn centers-to-centers
+  [points]
+   (mapcat #(centers points (first %) (second %))(centers points 0.0 0.0)))
+
+
+(print (centers points 0.0 0.0))
+
+(print (centers-to-centers points))
+
+
+
 
 
 
@@ -192,7 +187,7 @@
     ;; (- (q/height) scaled-y) - in quil library The higher the number, the less it is in the picture.
     (let [scaled-x (+ 750 (* x 50))
           scaled-y (+ 500 (* y 50))]
-      (if (some #(= [x y] %) (centers points))
+      (if (some #(= [x y] %) (centers-to-centers points))
       (q/fill 255 0 0)
       (q/fill 255))
       (q/ellipse scaled-x (- (q/height) scaled-y) 10 10))))
