@@ -129,25 +129,52 @@
 (defn fsin [k] (round-5 (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
 
 
+(defn spots [[x y] ks]
+  (map (fn [k]
+         [(+ x (fcos k )) (+ y (fsin k ))]) ; Za svaku k vrednost izračunaj tačku
+       ks))
 
 (defn spots-to-spots
   [[x y] k n]
   ;; dec decrising n by 1 until n go to 0, if n 0 recursion stop
-  ;;
-  (if (zero? n)
-    []
-    (let [current-spots (spots [x y] k)]
-      (concat current-spots
-              (mapcat #(spots-to-spots % k (dec n)) current-spots)))))
+  ;;put distinct to avoud duplicates
+  (distinct (if (zero? n)
+              []
+              (let [current-spots (spots [x y] k)]
+                (concat current-spots
+                        (mapcat #(spots-to-spots % k (dec n)) current-spots)))))
+
+  )
+;;now I will try to paint red centers of areas
+;; I will paint red only coordinate which on distance from center 1, 2 and 4
+;; function for distance
+;;
+;; Euclid distance
+;;
+(defn math-round [n decimals]
+  (/ (m/round (* n (m/pow 10 decimals))) (m/pow 10 decimals)))
+
+(defn distance [x y decimals]
+  (let [dist (m/sqrt (+ (m/pow x 2) (m/pow y 2)))]
+    (math-round dist decimals)))
+;;I realize that centers is on angels (k*pi/6) ke{0,1..12}
+;; centers are on 2cos(Pi/6) = 1.73 for first ring
+;; for second ring
 
 (def points (spots-to-spots [0 0]  [0 1 2 3 4 5] 5))
-
 (print points)
 
+(defn centers [points]
+  "Centers will be every spot approximately 1.732 far away from the origin"
+   (map #(vector (math-round (first %) 3) (math-round (second %) 3)) (filter #(= (distance (first %) (second %) 3) 1.732) points)))
+
+(print (centers points))
+
+
+
+;; ==========================================================================================
 ;; To be easier I will make visualize
 ;; Used https://github.com/quil/quil/blob/master/README.md
-;; ==========================================================================================
-
 
 (defn setup []
   ; g/frame-rate - seconds to refresh plots when I make some changes
@@ -165,7 +192,11 @@
     ;; (- (q/height) scaled-y) - in quil library The higher the number, the less it is in the picture.
     (let [scaled-x (+ 750 (* x 50))
           scaled-y (+ 500 (* y 50))]
+      (if (some #(= [x y] %) (centers points))
+      (q/fill 255 0 0)
+      (q/fill 255))
       (q/ellipse scaled-x (- (q/height) scaled-y) 10 10))))
+
 
 
 
