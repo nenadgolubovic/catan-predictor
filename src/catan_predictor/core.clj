@@ -100,41 +100,62 @@
 ;; ke{0,1,2,3,4,5}
 ;; x = r*cos((1+2k)/6*pi)
 ;; y = r*sin((1+2k)/6*pi)
+
+
+;;
+;;
 ;;
 ;; Make a hexagon
 
 (defn round-5 [x] (/ (m/round (* x 10000)) 10000.0))
 (defn fcos [k] (round-5 (m/cos  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
 (defn fsin [k] (round-5 (m/sin  (* m/PI (/ (+ 1 (* 2 k)) 6)))))
-
-
+(defn fcos1 [k] (round-5 (m/cos  (* m/PI (/ k 3)))))
+(defn fsin1 [k] (round-5 (m/sin  (* m/PI (/ k 3)))))
+;;I want the point from which the other points are made to remain connected to them.
 (defn spots [[x y] ks]
+  "I will make function which make hexagon area"
   (map (fn [k]
          [(+ x (fcos k )) (+ y (fsin k ))]) ; Za svaku k vrednost izračunaj tačku
        ks))
+
+
+
+(spots [0.0 0.0] [0 1 2 3 4 5])
+
+(defn spots [[x y] ks]
+  (let [original-point [x y]
+        calculated-points (map (fn [k]
+                                 [(+ x (fcos k)) (+ y (fsin k))]) ks)]
+    (map #(vector original-point %) calculated-points)))
+
+(defn math-round [n decimals]
+  (/ (m/round (* n (m/pow 10 decimals))) (m/pow 10 decimals)))
+(defn round-seq
+  [seq n]
+  (map (fn [[x y]] [(math-round x 3) (math-round y n)]) seq))
 
 (defn spots-to-spots
   [[x y] k n]
   ;; dec decrising n by 1 until n go to 0, if n 0 recursion stop
   ;;put distinct to avoud duplicates
+  (map #(vector (vector (math-round (first (first %)) 3) (math-round (second (first %)) 3) )
+                (vector (math-round (first (second %)) 3) (math-round (second (second %)) 3))) ;;this line round numbers on 3 decimals
+       (distinct (if (zero? n)
+                   []
+                   (let [current-spots (spots [x y] k)]
+                     (concat current-spots
+                             (mapcat #(spots-to-spots (second %)  k (dec n)) current-spots)))))))
 
 
-  (map #(vector (math-round (first %) 3) (math-round (second %) 3)) ;;this line round numbers on 3 decimals
-  (distinct (if (zero? n)
-              []
-              (let [current-spots (spots [x y] k)]
-                (concat current-spots
-                        (mapcat #(spots-to-spots % k (dec n)) current-spots))))))
 
-  )
 ;;now I will try to paint red centers of areas
 ;; I will paint red only coordinate which on distance from center 1, 2 and 4
 ;; function for distance
 ;;
 ;; Euclid distance
 ;;
-(defn math-round [n decimals]
-  (/ (m/round (* n (m/pow 10 decimals))) (m/pow 10 decimals)))
+
 
 (defn distance [x y decimals]
   (let [dist (m/sqrt (+ (m/pow x 2) (m/pow y 2)))]
@@ -143,30 +164,84 @@
 ;; centers are on 2cos(0) = 2 for first ring)
 ;; for second ring
 
-(def points (spots-to-spots [0 0]  [0 1 2 3 4 5] 5))
+(defn centers [points x y]
+  "Centers will be every spot approximately 2 far away from the given [x y] point"
+  (let [target-distance 2.000]
+    (concat
+      [[x y]]
+      (filter
+        #(= (distance (- (second (first %)) x) (- (first (first %)) y) 3)
+            target-distance) points))
+    ))
+
+(def points (spots-to-spots [0.0 0.0] [0 1 2 3 4 5] 5))
+(spots-to-spots [0.0 0.0] [0 1 2 3 4 5] 5)
+(centers points 0.0 0.0)
+
 (print points)
 
 
-(defn centers [points x y]
-  "Centers will be every spot approximately 1.732 far away from the given [x y] point"
-  (let [target-distance 2.000]
-    (concat [[x y]](filter #(= (distance (- (first %) x) (- (second %) y) 3) target-distance) points))
-    ))
 
-(defn centers-to-centers
+
+;;Second Approach: to make function which make area and more areas
+
+(defn make-ring-area-centers
+  [x y r]
+  "This function calculate centers of hexagons on ring"
+  (distinct
+    (map (fn [k]
+           [(+ x (* r (fcos1 k))) (+ y (* r (fsin1 k)))]) [0 1 2 3 4 5]
+         ))
+  )
+
+
+(defn make-centers
   [points]
-   (mapcat #(centers points (first %) (second %))(centers points 0.0 0.0)))
+  "This function make centers for full board"
+  (distinct
+    (round-seq
+      (mapcat #(make-ring-area-centers (first %) (second %) 1.732) points)
+      3))
+  )
+
+(defn make-spots-from-centers
+  [centers]
+  "This function make a spots of hexagons, from provided centers"
+  (distinct
+    (round-seq
+      (mapcat #(spots [(first %) (second %)] [0 1 2 3 4 5])
+              centers)
+      3))
+  )
 
 
-(print (centers points 0.0 0.0))
 
-(print (centers-to-centers points))
+(def centers (make-centers (make-ring-area-centers 0.0 0.0 1.732)))
+
+(def points (make-spots-from-centers centers))
+
+(defn distance-1-2
+  [[x1 y1] [x2 y2]]
+  (Math/sqrt (+ (Math/pow (- x2 x1) 2) (Math/pow (- y2 y1) 2))
+  ))
+
+(defn roads
+  [points]
+  "Def pairs of spots which make a road, distance is 1 between 2 spots always"
+  (mapcat (fn [n1]
+            (map (fn [n2] [n1 n2]) (filter #(= 1.000 (distance-1-2 n1 %)) points)))
+          points))
+
+(roads points)
+
+(count (roads points))
 
 
 
+(count centers)
+(count points)
 
-
-
+(print points)
 ;; ==========================================================================================
 ;; To be easier I will make visualize
 ;; Used https://github.com/quil/quil/blob/master/README.md
@@ -177,9 +252,9 @@
   (q/frame-rate 30)
   (q/background 0))
 
-(print points)
+
 (defn draw []
-  (doseq [[x y] points]
+  (doseq [[x y]  (concat points centers)]
     ;;Make plot with moved x and y coordinate , x by 750 and y by 500 to put on middle of chart
     ;; (middle of value of size in scatter-plot func) and because spots is small order of magnitude from 0 to 1
     ;; g/ellipse - type of spots
@@ -187,10 +262,12 @@
     ;; (- (q/height) scaled-y) - in quil library The higher the number, the less it is in the picture.
     (let [scaled-x (+ 750 (* x 50))
           scaled-y (+ 500 (* y 50))]
-      (if (some #(= [x y] %) (centers-to-centers points))
-      (q/fill 255 0 0)
-      (q/fill 255))
-      (q/ellipse scaled-x (- (q/height) scaled-y) 10 10))))
+      (if (some #(= [x y] %) centers)
+        (q/fill 255 0 0)  ; center - red
+        (q/fill 255))     ; points - white
+      (q/ellipse scaled-x (- (q/height) scaled-y) 10 10)
+      )))
+
 
 
 
