@@ -3,17 +3,14 @@
 
 (defn buy-development-card [])
 
-(defn exchange-cards
-  [hand sell-card-type buy-card-type]
-  "Select type which want to buy and which want to sell"
-  (swap! hand update :cards
-         ()))
-
 (defn remove-card
   [cards-type hand]
-  "Select type of cards and delete from hand"
-  (remove #(= % cards-type) hand)
-  )
+  "Select type of cards and delete one from hand"
+  (let [index (some #(when (= (second %) cards-type) (first %))
+                    (map-indexed vector hand))]
+    (if index
+      (into (subvec hand 0 index) (subvec hand (inc index))) ;Take all elements from 0 to index and from index+1 to end
+      hand)))
 
 (defn remove-n-cards
   [type-card hand n]
@@ -23,16 +20,21 @@
       (recur (remove-card type-card hand) (dec n))
       hand)))
 
+(defn add-cards
+  [card-type  hand]
+  "Add n cards of a given type in the hand"
+  (into hand card-type))
 
-(remove-card  "a" v-of-cards)
+(add-cards [ "a" "a" "b"] ["c"] )
 
+(defn exchange-cards
+  [hand sell-card-type buy-card-type n]
+  "Select type which want to buy and which want to sell"
+  (swap! hand update :cards
+         #(remove-n-cards sell-card-type % n))
+  (swap! hand update :cards
+         #(add-cards [buy-card-type] %)))
 
-(def v-of-cards ["a" "a" "a" "a" "a" "b" "c"])
-(remove-n-cards "a" v-of-cards 2)
-
-
-(def n 3)
-(while (< n 0)(remove #(= % "a") v-of-cards )(dec n))
 
 (defn build-settlement [])
 
