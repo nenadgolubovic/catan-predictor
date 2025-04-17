@@ -1,20 +1,45 @@
-(ns catan-predictor.deck)
+(ns catan-predictor.deck
+  (:require [catan-predictor.shop :as shop]))
 
 
-(def deck-development-card
-  (atom {:knight         14
-         :victory-point  5
-         :road-building  2
-         :monopoly       2
-         :year-of-plenty 2}))
-
-
+(def deck-development-card (atom ["knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight"
+                                  "victory-point" "victory-point" "victory-point" "victory-point" "victory-point"
+                                  "road-building" "road-building"
+                                  "monopoly" "monopoly"
+                                  "year-of-plenty" "year-of-plenty"])
+  )
 (defn get-random-card [deck-atom]
   (let [deck @deck-atom
-        cards (apply concat (map (fn [[card count]] (repeat count card)) deck))
-        chosen (rand-nth cards)]
-    (swap! deck-atom update chosen dec)
+        chosen (rand-nth deck)]
+    (swap! deck-atom (fn [deck] (shop/remove-card chosen deck)))
     chosen))
+
+(get-random-card deck-development-card)
+
+(print @deck-development-card)
+
+(defn take-development-card
+  [hand deck hand-dev-cards]
+  "Take random card from deck and remove cards from hand for buying (ore,wood,grain) and add in development-hand"
+  (let [card (get-random-card deck)]
+    (swap! hand update :cards #(shop/buy-development-card %))
+    (swap! hand-dev-cards update :cards #(conj % card))
+    card))
+
+
+(def hand (atom {:cards ["wool" "brick" "wood" "ore" "grain"]} ))
+
+
+
+(def ddc (atom {:cards []}))
+
+(take-development-card hand deck-development-card ddc)
+
+
+
+(print @deck-development-card)
+(print @ddc)
+(print @hand)
 
 (def resources #{"wool" "brick" "wood" "ore" "grain"})
 

@@ -4,7 +4,8 @@
 
 (def hand (atom {:player nil
                  :cards []}))
-
+(def hand-development (atom {:player nil
+                             :cards []}))
 
 (defn update-hand
   [hand new-card]
