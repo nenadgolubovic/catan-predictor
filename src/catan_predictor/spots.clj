@@ -18,10 +18,6 @@
               centers)
       3)))
 
-(spots [0.0 0.0] [0 1 2 3 4 5])
-(make-spots-from-centers (spots [0.0 0.0] [0 1 2 3 4 5 ] ))
-
-;Spots should have rang [0,1,2] play
 
 
 (defn upgrade-spot )

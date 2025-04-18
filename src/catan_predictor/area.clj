@@ -7,11 +7,6 @@
             [catan-predictor.visualization :as vis]))
 
 
-(defn area (atom {:id []
-                  :resource []
-                  :spots []
-                  :number []}))
-
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
 
 (def points (spots/make-spots-from-centers centers))
@@ -49,20 +44,20 @@
                  (rand-nth @numbers))
 
         spots (filter #(= 1.000 (utils/distance-1-2 [(first center) (second center)] [(first %) (second %)])) points)]
-        (swap! resources
+    (swap! resources
            (fn [res-list]
              "delete from atom resource and bring back atom without resource"
              (let [first-removed (remove-once resource res-list)]
                first-removed)))
-        (swap! numbers
-               (fn [res-list]
-                 "delete from atom resource and bring back atom without resource"
-                 (let [first-removed (remove-once number res-list)]
-                   first-removed)))
-              {:center center
-              :resource resource
-              :spots spots
-              :number number}))
+    (swap! numbers
+           (fn [res-list]
+             "delete from atom resource and bring back atom without resource"
+             (let [first-removed (remove-once number res-list)]
+               first-removed)))
+    {:center center
+     :resource resource
+     :spots spots
+     :number number}))
 
 
 (defn create-areas-from-centers

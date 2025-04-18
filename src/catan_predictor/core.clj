@@ -7,6 +7,7 @@
                                                       [catan-predictor.spots :as spots]
                                                       [catan-predictor.centers :as centers]
                                                       [catan-predictor.visualization :as vis]
+                                                      [catan-predictor.area :as area]
                                                       ))
 
 
@@ -21,8 +22,18 @@
 (def points (spots/make-spots-from-centers centers))
 
 (def r (roads/roads points))
+(def resources (atom ["wool" "wool" "wool" "wool"
+                      "brick" "brick" "brick"
+                      "wood" "wood" "wood" "wood"
+                      "ore" "ore" "ore"
+                      "grain" "grain" "grain" "grain"
+                      "dust"
+                      ]))
 
-(vis/visualization-board r points centers)
+(def numbers (atom [2 3 3 4 4 5 5 6 6 8 8 9 9 10 10 11 11 12 ]))
+
+(def areas (area/create-areas-from-centers points centers resources numbers))
+(vis/visualization-board r points centers areas)
 
 
 

@@ -1,6 +1,8 @@
 (ns catan-predictor.visualization
   (:require [quil.core :as q]))
 
+
+
 (defn visualization-board
   [roads points centers]
   "Visualization of roads points and centers using quil library"
