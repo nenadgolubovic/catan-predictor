@@ -27,20 +27,5 @@
     card))
 
 
-(def hand (atom {:cards ["wool" "brick" "wood" "ore" "grain"]} ))
-
-
-
-(def ddc (atom {:cards []}))
-
-(take-development-card hand deck-development-card ddc)
-
-
-
-(print @deck-development-card)
-(print @ddc)
-(print @hand)
-
-(def resources #{"wool" "brick" "wood" "ore" "grain"})
 
 

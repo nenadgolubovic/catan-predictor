@@ -52,12 +52,4 @@
 
 
 
-(defn buy-town
-  [])
-(defn buy-settlement
-  [])
-(defn buy-road
-  [])
-
-
 

@@ -1,9 +1,11 @@
-(ns catan-predictor.player)
+(ns catan-predictor.player
+  (:require [catan-predictor.shop :as shop]
+            [catan-predictor.deck :as deck]))
 
-(def player-1 (atom {:settlement []
+(def player-1 (atom {:settlement [[0.0 0.0]]
                      :towns []
                      :roads []
-                     :hand []
+                     :hand ["wool" "brick" "ore" "grain" "wood" "ore" "ore" "ore" "grain"]
                      :dev-cards []
                      :color [255 165 0]
                      :victory-points nil
@@ -12,9 +14,23 @@
                      :longest-route false
                      :biggest-army false}))
 
+(defn buy-dev-card
+  [player]
+  "Take random card from deck and remove cards from hand for buying (ore,wood,grain) and add in development-hand"
+  (let [card (deck/get-random-card deck/deck-development-card)]
+    (swap! player update :hand #(shop/buy-development-card %))
+    (swap! player update :dev-cards #(conj % card))
+    card))
+
+
+(print deck/deck-development-card)
+(print @player-1)
+
 (defn upgrade-settlement
   [player spot]
   "Define spot as settlement"
+  (swap! player update :hand
+         #(shop/buy-settlement %))
   (swap! player update :settlement
          #(conj % spot)))
 
@@ -24,6 +40,8 @@
   (let [spots (:settlement @player)]
     (if (some #(= % spot) spots)
       (do
+        (swap! player update :hand
+               #(shop/buy-town %))
         (swap! player update :settlement
                #(remove (fn [x] (= spot x)) %))
         (swap! player update :towns
@@ -39,3 +57,8 @@
         longest-route (if (:longest-route @player) 2 0)
         biggest-army (if (:biggest-army @player) 2 0)]
     (+ count-settlement count-towns vp longest-route biggest-army)))
+
+(defn get-resource
+  [player resource]
+  (swap! player update :hand
+         #(conj % resource)))
