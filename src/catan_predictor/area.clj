@@ -4,7 +4,7 @@
             [catan-predictor.utils :as utils]
             [catan-predictor.roads :as roads]
             [catan-predictor.centers :as centers]
-            [catan-predictor.visualization :as vis]))
+            ))
 
 
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))

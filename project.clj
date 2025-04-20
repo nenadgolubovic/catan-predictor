@@ -5,10 +5,8 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/clojure "1.11.1"]
-                 [aysylu/loom "1.0.2"]
-                 [rhizome "0.2.9"]
-                 [quil "3.1.0"]
                  [seesaw "1.5.0"]
+                 [cljfx "1.9.5"]
                  ]
   :main ^:skip-aot catan-predictor.core
   :target-path "target/%s"

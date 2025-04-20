@@ -1,6 +1,5 @@
 (ns catan-predictor.utils
   (:require [clojure.math :as m]
-            [quil.core :as q]
             ))
 
 

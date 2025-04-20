@@ -1,7 +1,6 @@
 (ns catan-predictor.core
                                             (:gen-class)
                                             (:require [clojure.math :as m]
-                                                      [quil.core :as q]
                                                       [catan-predictor.utils :as utils]
                                                       [catan-predictor.roads :as roads]
                                                       [catan-predictor.spots :as spots]
@@ -10,6 +9,7 @@
                                                       [catan-predictor.area :as area]
                                                       [catan-predictor.visualization :as vis]
                                                       ))
+
 
 
 
@@ -40,5 +40,5 @@
 
 (defn -main
   []
-  (vis/show-gui))
+  (vis/start-game))
 
