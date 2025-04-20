@@ -8,6 +8,7 @@
                                                       [catan-predictor.centers :as centers]
                                                       [catan-predictor.visualization :as vis]
                                                       [catan-predictor.area :as area]
+                                                      [catan-predictor.visualization :as vis]
                                                       ))
 
 
@@ -33,12 +34,11 @@
 (def numbers (atom [2 3 3 4 4 5 5 6 6 8 8 9 9 10 10 11 11 12 ]))
 
 (def areas (area/create-areas-from-centers points centers resources numbers))
-(vis/visualization-board r points centers areas)
+
 
 
 
 (defn -main
-  "I don't do a lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+  []
+  (vis/show-gui))
 

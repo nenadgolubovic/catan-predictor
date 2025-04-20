@@ -13,7 +13,6 @@
 
 (def r (roads/roads points))
 
-(vis/visualization-board r points centers)
 
 (def resources (atom ["wool" "wool" "wool" "wool"
                       "brick" "brick" "brick"
@@ -73,6 +72,3 @@
 
 
 (def center [1.732 0.0])
-
-
-(create-area-atom [0.0 0.0] points)

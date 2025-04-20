@@ -8,6 +8,7 @@
                  [aysylu/loom "1.0.2"]
                  [rhizome "0.2.9"]
                  [quil "3.1.0"]
+                 [seesaw "1.5.0"]
                  ]
   :main ^:skip-aot catan-predictor.core
   :target-path "target/%s"

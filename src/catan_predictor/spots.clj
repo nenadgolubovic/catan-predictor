@@ -18,6 +18,3 @@
               centers)
       3)))
 
-
-
-(defn upgrade-spot )
