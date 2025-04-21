@@ -17,12 +17,19 @@
                    BackgroundPosition/CENTER
                    (BackgroundSize. 1000 1000 true true true false))])))
 
-(defn event-handler [event]
-  (case (:event/type event)
-    :add (swap! *state update :players-count inc)
-    :remove  (swap! *state update :players-count dec)
-    nil))
-
+(defn choose-spot-for-settlement
+  [state]
+  {:fx/type :stage
+   :showing true
+   :title "CATAN"
+   :scene {:fx/type :scene
+           :root {:fx/type :stack-pane
+                  :alignment :center
+                  :style "-fx-background-color: #1e90ff;"
+                  :children [{:fx/type :button
+                              :text "Exit from the game"
+                              :on-action {:event/type :start-game-view}}
+                             ]}}})
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
@@ -67,10 +74,10 @@
                                                   -fx-min-width: 200px;
                                                   -fx-min-height: 60px;"
                                           :on-action {:event/type :remove}}]
-                                          :translate-y 100}
-                                         {:fx/type :label
-                                          :text (str "Number of players " (:players-count state))
-                                          :style "-fx-font-size: 20px;
+                              :translate-y 100}
+                             {:fx/type :label
+                              :text (str "Number of players " (:players-count state))
+                              :style "-fx-font-size: 20px;
                                                   -fx-font-weight: bold;
                                                   -fx-background-color: #009688;
                                                   -fx-text-fill: white;
@@ -79,10 +86,10 @@
                                                   -fx-min-width: 200px;
                                                   -fx-min-height: 60px;"
 
-                                          :translate-y 0}
-                                         {:fx/type :button
-                                          :text "Start Game"
-                                          :style "-fx-font-size: 40px;
+                              :translate-y 0}
+                             {:fx/type :button
+                              :text "Start Game"
+                              :style "-fx-font-size: 40px;
                                                   -fx-font-weight: bold;
                                                   -fx-background-color: #FF5722;
                                                   -fx-text-fill: white;
@@ -90,14 +97,26 @@
                                                   -fx-background-radius: 5px;
                                                   -fx-min-width: 400px;
                                                   -fx-min-height: 100px;"
-                                          :on-action (fn [_]
-                                                       (println "Game Started!"))
-                                          :translate-y 200
-                                         }
-                                         ]}}})
+                              :on-action {:event/type :choose-spot-for-settlement}
+                              :translate-y 200
+                              }
+                             ]}}})
+
+(defn event-handler [event]
+  (case (:event/type event)
+    :add (swap! *state update :players-count inc)
+    :remove  (swap! *state update :players-count dec)
+    :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
+    :start-game-view (swap! *state assoc :fx/type start-game-view)
+    nil))
 
 
-(def renderer
+
+
+
+
+
+  (def renderer
   (fx/create-renderer
     :opts {:fx.opt/map-event-handler event-handler}))
 

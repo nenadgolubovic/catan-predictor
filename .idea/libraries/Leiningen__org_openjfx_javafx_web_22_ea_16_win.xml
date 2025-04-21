@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.openjfx/javafx-web:22-ea+16:win">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-web/22-ea+16/javafx-web-22-ea+16-win.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
