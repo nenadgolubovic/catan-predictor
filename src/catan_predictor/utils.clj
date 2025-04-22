@@ -2,6 +2,10 @@
   (:require [clojure.math :as m]
             ))
 
+(defn random-dice-number
+  []
+  "get random number from 1 to 6"
+  (+ 1 (rand-int 6)))
 
 (defn math-round
   [n decimals]
