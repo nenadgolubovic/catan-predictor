@@ -75,8 +75,10 @@
   {:fx/type  :circle
    :center-x (* 100 x)
    :center-y (* 100 y)
-   :radius   5
+   :radius   10
    :fill     "white"
+   :on-mouse-clicked {:event/type :spots-click
+                      :spot-coordinates [x y]}
 })
 
 (defn create-line-view [x1 y1 x2 y2]
@@ -86,7 +88,9 @@
    :end-x      (* 100 x2)
    :end-y      (* 100 y2)
    :stroke     "black"
-   :stroke-width 5})
+   :stroke-width 10
+   :on-mouse-clicked {:event/type :roads-click
+                      :road-coordinates [[x1 y1] [x2 y2]]}})
 (defn spots-view []
   {:fx/type :group
    :translate-x -250
@@ -199,8 +203,11 @@
                               }
                              ]}}})
 
-(defn handle-click []
-  (println (str "Clicked: ")))
+(defn handle-click [coordinates]
+  (println "Clicked:" coordinates))
+(defn handle-road-click [coordinates]
+  (println "Clicked:" coordinates))
+
 (defn event-handler [event]
   (case (:event/type event)
     :add (swap! *state update :players-count inc)
@@ -208,7 +215,8 @@
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-    :spots-click (handle-click)
+    :spots-click (handle-click (:spot-coordinates event))
+    :roads-click (handle-road-click (:road-coordinates event))
     nil))
 
   (def renderer
