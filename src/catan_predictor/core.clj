@@ -33,8 +33,6 @@
 
 (def numbers (atom [2 3 3 4 4 5 5 6 6 8 8 9 9 10 10 11 11 12 ]))
 
-(def areas (area/create-areas-from-centers points centers resources numbers))
-
 
 
 

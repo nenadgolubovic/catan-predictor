@@ -1,3 +1,0 @@
-(ns catan-predictor.board)
-
-

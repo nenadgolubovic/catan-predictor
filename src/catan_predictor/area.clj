@@ -63,9 +63,10 @@
   [points centers resources numbers]
   (map #(create-area % points resources numbers) centers))
 
-(print @numbers)
-(print @resources)
-(create-areas-from-centers points centers resources numbers)
+
+
+
+
 
 
 
