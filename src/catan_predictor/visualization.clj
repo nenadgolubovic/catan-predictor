@@ -148,6 +148,8 @@
          :fill pattern
          :stroke "black"
          :stroke-width 1
+         :on-mouse-clicked {:event/type :circle-click
+                            :center-coordinates [x y]}
          }))
 (defn hexagon-with-circle [x y image circle-image]
     {:fx/type :group
@@ -247,7 +249,7 @@
    :scene   {:fx/type :scene
              :root    {:fx/type  :stack-pane
                        :style    "-fx-background-color: #1e90ff;"
-                       :children [(hand-view ["grain" "ore"])
+                       :children [(hand-view ["grain" "ore" "wool" "wood" "brick"])
                                   {:fx/type   :h-box
                                    :alignment :top-left
                                    :children  [{:fx/type   :button
@@ -345,6 +347,8 @@
   (println "Clicked:" coordinates))
 (defn handle-road-click [coordinates]
   (println "Clicked:" coordinates))
+(defn handle-numbers-click [number]
+  (println "Clicked:" number))
 
 (defn event-handler [event]
   (case (:event/type event)
@@ -355,6 +359,7 @@
     :dice-view (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
     :spots-click (handle-click (:spot-coordinates event))
     :roads-click (handle-road-click (:road-coordinates event))
+    :circle-click (handle-numbers-click (:center-coordinates event))
 
     nil))
 
