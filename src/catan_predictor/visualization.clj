@@ -40,8 +40,8 @@
                :image      {:fx/type :image
                             :url     "file:resources/static/dices.png"}
                :fit-width  350
-               :fit-height 200}
-
+               :fit-height 200
+               }
    :on-action {:event/type :dice-view}}
   )
 (defn dice-views
@@ -52,12 +52,22 @@
                 :fit-width  200
                 :fit-height 200
                 :image      {:fx/type :image
-                             :url     (get-dice-image-url (get @*state :dice-1))}}
+                             :url     (get-dice-image-url (get @*state :dice-1))}
+                :clip {:fx/type :rectangle
+                       :width 200
+                       :height 200
+                       :arc-width 40
+                       :arc-height 40}}
                {:fx/type    :image-view
                 :fit-width  200
                 :fit-height 200
                 :image      {:fx/type :image
-                             :url     (get-dice-image-url (get @*state :dice-2))}}]
+                             :url     (get-dice-image-url (get @*state :dice-2))}
+                :clip {:fx/type :rectangle
+                       :width 200
+                       :height 200
+                       :arc-width 40
+                       :arc-height 40}}]
    })
 (defn dices []
   {:fx/type   :v-box
@@ -155,12 +165,80 @@
                                                          "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))]
     (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) data)
          ))
+(defn card
+  [resource type]
+  (let [image-path (str "file:resources/static/"type"-" resource ".jpg")
+        image (Image. image-path)
+        pattern (ImagePattern. image)]
+  {:fx/type :rectangle
+   :width 160
+   :height 230
+   :arc-height 20
+   :arc-width 20
+   :fill pattern
+   :stroke :gray
+   :stroke-width 1
+   }))
+(defn hand-view
+  [cards]
+  {:fx/type :h-box
+   :alignment :bottom-center
+   :children (vec (map #(card % "resource") cards))}
+  )
+(defn hand-dev-view
+  [cards]
+  {:fx/type :h-box
+   :alignment :bottom-right
+   :children (vec (map #(card % "dev") cards))}
+  )
 (defn image-group []
   {:fx/type     :group
   :translate-x -250
   :translate-y -100
   :children (vec (generate-image-hex))})
-
+(defn end-turn-btn
+  []
+  {:fx/type   :button
+   :text      "End Turn"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 50
+   })
+(defn table-info
+  []
+  {:fx/type :table-view
+   :column-resize-policy :constrained
+   :style "-fx-background-color: transparent;
+         -fx-control-inner-background: transparent;
+         -fx-table-cell-border-color: transparent;
+         -fx-table-header-border-color: transparent;
+         -fx-selection-bar: transparent;
+         -fx-selection-bar-non-focused: transparent;"
+   :items [{:player "Player 1" :vp 5 :road-length 5 :army-size 1}
+          {:player "Player 2" :vp 4 :road-length 2 :army-size 2}
+          {:player "Player 3" :vp 4 :road-length 1 :army-size 3}
+          {:player "Player 4" :vp 5 :road-length 3 :army-size 4}]
+   :columns [{:fx/type :table-column
+              :text "Player"
+              :cell-value-factory :player
+              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
+              }
+             {:fx/type :table-column
+              :text "Victory Points"
+              :cell-value-factory :vp
+              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
+              }
+             {:fx/type :table-column
+              :text "Road Length"
+              :cell-value-factory :road-length
+              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
+              }
+             {:fx/type :table-column
+              :text "Army Size"
+              :cell-value-factory :army-size
+              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
+              }
+             ]})
 (defn choose-spot-for-settlement
   [state]
   {:fx/type :stage
@@ -169,7 +247,8 @@
    :scene   {:fx/type :scene
              :root    {:fx/type  :stack-pane
                        :style    "-fx-background-color: #1e90ff;"
-                       :children [{:fx/type   :h-box
+                       :children [(hand-view ["grain" "ore"])
+                                  {:fx/type   :h-box
                                    :alignment :top-left
                                    :children  [{:fx/type   :button
                                                 :text      "Exit from the game"
@@ -178,17 +257,17 @@
                                    :alignment :center-right
                                    :children  [{:fx/type   :v-box
                                                 :alignment :center
-                                                :children  [(dices-button)
+                                                :children  [(table-info)
+                                                            (dices-button)
                                                             (dice-views)
-                                                            (shop-button)]}]}
+                                                            (shop-button)
+                                                            (hand-dev-view ["year-of-plenty" "knight" "monopoly" "victory-point" "road-building"])
+                                                            (end-turn-btn)]}]}
                                   (image-group)
                                   (roads-view)
                                   (spots-view)
+
                                   ]}}})
-
-
-
-
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
