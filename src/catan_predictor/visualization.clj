@@ -5,6 +5,7 @@
             [catan-predictor.roads :as roads]
             [catan-predictor.area :as area]
             [catan-predictor.centers :as centers]
+            [catan-predictor.player :as player]
             [cljfx.fx :as fx-elem])
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
@@ -15,7 +16,7 @@
            [javafx.geometry Rectangle2D]))
 
 
-(defonce *state (atom {:players-count 1 :show-popup? false}))
+(defonce *state (atom {}))
 
 (defn background-image []
   (Background.
@@ -79,6 +80,18 @@
 (def points (spots/make-spots-from-centers centers))
 (def r (roads/roads points))
 
+(defn input-box-player-name []
+  {:fx/type :text-field
+   :text (:input-name @*state)
+   :prompt-text "Player name"
+   :on-text-changed  {:event/type :set-input-name}
+   })
+(defn input-box-color []
+  {:fx/type :text-field
+   :text (:input-name @*state)
+   :prompt-text "Player name"
+   :on-text-changed {:event/type :set-input-name}
+   })
 (defn create-spot-view [x y]
   {:fx/type          :circle
    :center-x         (* 100 x)
@@ -207,7 +220,7 @@
    :v-box/margin 50
    })
 (defn table-info
-  []
+  [state]
   {:fx/type :table-view
    :column-resize-policy :constrained
    :style "-fx-background-color: transparent;
@@ -216,10 +229,13 @@
          -fx-table-header-border-color: transparent;
          -fx-selection-bar: transparent;
          -fx-selection-bar-non-focused: transparent;"
-   :items [{:player "Player 1" :vp 5 :road-length 5 :army-size 1}
-          {:player "Player 2" :vp 4 :road-length 2 :army-size 2}
-          {:player "Player 3" :vp 4 :road-length 1 :army-size 3}
-          {:player "Player 4" :vp 5 :road-length 3 :army-size 4}]
+   :items (vec (map (fn [player]
+                 {:player (:name player)
+                  :victory-points (or (:victory-points player) 0)
+                  :road-length (or (:road-length player) 0)
+                  :army-size (or (:knight-length player) 0)})
+               (:players @state)))
+
    :columns [{:fx/type :table-column
               :text "Player"
               :cell-value-factory :player
@@ -227,7 +243,7 @@
               }
              {:fx/type :table-column
               :text "Victory Points"
-              :cell-value-factory :vp
+              :cell-value-factory :victory-points
               :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
               }
              {:fx/type :table-column
@@ -241,6 +257,14 @@
               :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
               }
              ]})
+(defn shop []
+  {:fx/type :stage
+   :showing true
+   :title "Shop"
+   :width 1000
+   :height 500
+   }
+  )
 (defn choose-spot-for-settlement
   [state]
   {:fx/type :stage
@@ -259,7 +283,7 @@
                                    :alignment :center-right
                                    :children  [{:fx/type   :v-box
                                                 :alignment :center
-                                                :children  [(table-info)
+                                                :children  [(table-info *state)
                                                             (dices-button)
                                                             (dice-views)
                                                             (shop-button)
@@ -268,7 +292,6 @@
                                   (image-group)
                                   (roads-view)
                                   (spots-view)
-
                                   ]}}})
 (defn start-game-view [state]
   {:fx/type :stage
@@ -313,8 +336,9 @@
                                                   -fx-background-radius: 5px;
                                                   -fx-min-width: 200px;
                                                   -fx-min-height: 60px;"
-                                                    :on-action {:event/type :remove}}]
-                                     :translate-y 100}
+                                                    :on-action {:event/type :remove}}
+                                                   (input-box-player-name)]
+                                                   :translate-y 100}
                                     {:fx/type     :label
                                      :text        (str "Number of players " (:players-count state))
                                      :style       "-fx-font-size: 20px;
@@ -327,6 +351,7 @@
                                                   -fx-min-height: 60px;"
 
                                      :translate-y 0}
+
                                     {:fx/type     :button
                                      :text        "Start Game"
                                      :style       "-fx-font-size: 40px;
@@ -341,18 +366,25 @@
                                      :translate-y 200
                                      }
                                     ]}}})
-
-
 (defn handle-click [coordinates]
   (println "Clicked:" coordinates))
 (defn handle-road-click [coordinates]
   (println "Clicked:" coordinates))
 (defn handle-numbers-click [number]
   (println "Clicked:" number))
+(defn add-player
+  [state player-key name color]
+  (swap! state update player-key
+         (fn [existing-players]
+           (conj existing-players (player/create-player name color)))))
+
+
 
 (defn event-handler [event]
   (case (:event/type event)
-    :add (swap! *state update :players-count inc)
+    :add (do
+           (add-player *state :players (:input-name @*state) (:color @*state))
+           (println "Current *state after ADD:" @*state))
     :remove (swap! *state update :players-count dec)
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
@@ -360,7 +392,7 @@
     :spots-click (handle-click (:spot-coordinates event))
     :roads-click (handle-road-click (:road-coordinates event))
     :circle-click (handle-numbers-click (:center-coordinates event))
-
+    :set-input-name (swap! *state assoc :input-name (:fx/event event))
     nil))
 
 (def renderer

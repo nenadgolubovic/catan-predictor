@@ -2,17 +2,21 @@
   (:require [catan-predictor.shop :as shop]
             [catan-predictor.deck :as deck]))
 
-(def player-1 (atom {:settlement [[0.0 0.0]]
-                     :towns []
-                     :roads []
-                     :hand ["wool" "brick" "ore" "grain" "wood" "ore" "ore" "ore" "grain"]
-                     :dev-cards []
-                     :color [255 165 0]
-                     :victory-points nil
-                     :road-length nil
-                     :knight-length nil
-                     :longest-route false
-                     :biggest-army false}))
+
+(defn create-player [name color]
+  "create player"
+  {:name name
+   :settlement []
+   :towns []
+   :roads []
+   :hand []
+   :dev-cards []
+   :color color
+   :victory-points nil
+   :road-length nil
+   :knight-length nil
+   :longest-route false
+   :biggest-army false})
 
 (defn buy-dev-card
   [player]
@@ -21,10 +25,6 @@
     (swap! player update :hand #(shop/buy-development-card %))
     (swap! player update :dev-cards #(conj % card))
     card))
-
-
-(print deck/deck-development-card)
-(print @player-1)
 
 (defn upgrade-settlement
   [player spot]
