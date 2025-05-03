@@ -16,7 +16,9 @@
            [javafx.geometry Rectangle2D]))
 
 
-(defonce *state (atom {}))
+(def *state (atom {:player-turn 1}))
+
+
 
 (defn background-image []
   (Background.
@@ -80,17 +82,18 @@
 (def points (spots/make-spots-from-centers centers))
 (def r (roads/roads points))
 
+
 (defn input-box-player-name []
   {:fx/type :text-field
    :text (:input-name @*state)
    :prompt-text "Player name"
    :on-text-changed  {:event/type :set-input-name}
    })
-(defn input-box-color []
+(defn input-box-player-color []
   {:fx/type :text-field
-   :text (:input-name @*state)
-   :prompt-text "Player name"
-   :on-text-changed {:event/type :set-input-name}
+   :text (:set-input-color @*state)
+   :prompt-text "Color"
+   :on-text-changed {:event/type :set-input-color}
    })
 (defn create-spot-view [x y]
   {:fx/type          :circle
@@ -211,6 +214,12 @@
   :translate-x -250
   :translate-y -100
   :children (vec (generate-image-hex))})
+(defn player-turn-info
+  []
+  "label which provides information on whose turn it is"
+  {:fx/type :label
+   :text (str "Player " (:player-turn @*state))
+   :style "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;"})
 (defn end-turn-btn
   []
   {:fx/type   :button
@@ -218,6 +227,7 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   10
    :v-box/margin 50
+   :on-action {:event/type :end-turn}
    })
 (defn table-info
   [state]
@@ -233,7 +243,8 @@
                  {:player (:name player)
                   :victory-points (or (:victory-points player) 0)
                   :road-length (or (:road-length player) 0)
-                  :army-size (or (:knight-length player) 0)})
+                  :army-size (or (:knight-length player) 0)
+                  :color (:color player)})
                (:players @state)))
 
    :columns [{:fx/type :table-column
@@ -254,6 +265,11 @@
              {:fx/type :table-column
               :text "Army Size"
               :cell-value-factory :army-size
+              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
+              }
+             {:fx/type :table-column
+              :text "Color"
+              :cell-value-factory :color
               :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
               }
              ]})
@@ -284,6 +300,7 @@
                                    :children  [{:fx/type   :v-box
                                                 :alignment :center
                                                 :children  [(table-info *state)
+                                                            (player-turn-info)
                                                             (dices-button)
                                                             (dice-views)
                                                             (shop-button)
@@ -337,7 +354,8 @@
                                                   -fx-min-width: 200px;
                                                   -fx-min-height: 60px;"
                                                     :on-action {:event/type :remove}}
-                                                   (input-box-player-name)]
+                                                   (input-box-player-name)
+                                                   (input-box-player-color)]
                                                    :translate-y 100}
                                     {:fx/type     :label
                                      :text        (str "Number of players " (:players-count state))
@@ -378,12 +396,20 @@
          (fn [existing-players]
            (conj existing-players (player/create-player name color)))))
 
+(defn player-turn-inc
+  [number num-players]
+  "function that increments the player's ordinal number so that we know who has the move,
+  if the last player plays then the next player with ordinal number 1"
+  (if (= number num-players)
+    1
+    (inc number))
+  )
 
 
 (defn event-handler [event]
   (case (:event/type event)
     :add (do
-           (add-player *state :players (:input-name @*state) (:color @*state))
+           (add-player *state :players (:input-name @*state) (:input-color @*state))
            (println "Current *state after ADD:" @*state))
     :remove (swap! *state update :players-count dec)
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
@@ -393,6 +419,8 @@
     :roads-click (handle-road-click (:road-coordinates event))
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
+    :set-input-color (swap! *state assoc :input-color (:fx/event event))
+    :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
     nil))
 
 (def renderer
