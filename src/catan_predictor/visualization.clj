@@ -218,8 +218,10 @@
   []
   "label which provides information on whose turn it is"
   {:fx/type :label
-   :text (str "Player " (:player-turn @*state))
+   :text (str "Player " (:name (nth (seq (:players @*state)) (- (:player-turn @*state) 1))))
    :style "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;"})
+
+
 (defn end-turn-btn
   []
   {:fx/type   :button
@@ -289,7 +291,7 @@
    :scene   {:fx/type :scene
              :root    {:fx/type  :stack-pane
                        :style    "-fx-background-color: #1e90ff;"
-                       :children [(hand-view ["grain" "ore" "wool" "wood" "brick"])
+                       :children [(hand-view (:hand state))
                                   {:fx/type   :h-box
                                    :alignment :top-left
                                    :children  [{:fx/type   :button
@@ -304,7 +306,7 @@
                                                             (dices-button)
                                                             (dice-views)
                                                             (shop-button)
-                                                            (hand-dev-view ["year-of-plenty" "knight" "monopoly" "victory-point" "road-building"])
+                                                            (hand-dev-view (:dev-cards state))
                                                             (end-turn-btn)]}]}
                                   (image-group)
                                   (roads-view)
