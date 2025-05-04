@@ -19,15 +19,15 @@
 (def points (spots/make-spots-from-centers centers))
 (def r (roads/roads points))
 
-(def *state (atom {:player-turn 1 :areas (vec (area/create-areas-from-centers points centers
+(defonce *state (atom {:dice-1 2 :dice-2 2 :player-turn 1 :areas (vec (area/create-areas-from-centers points centers
                                                                               (atom ["wool" "wool" "wool" "wool"
                                                                                      "brick" "brick" "brick"
-                                                                                     "wood" "wood" "wood" "wood"
+                                                                                   "wood" "wood" "wood" "wood"
                                                                                      "ore" "ore" "ore"
                                                                                      "grain" "grain" "grain" "grain"
                                                                                      "dust"] )
                                                                               (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
-                                                                                     "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))} ))
+                                                                                     "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))}))
 
 
 
@@ -88,10 +88,6 @@
    :alignment :center
    :children
    (dices-button)})
-
-
-
-
 (defn input-box-player-name []
   {:fx/type :text-field
    :text (:input-name @*state)
@@ -184,7 +180,6 @@
   (let [areas (vec (:areas state))]
     (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) areas)
          ))
-
 (defn card
   [resource type]
   (let [image-path (str "file:resources/static/"type"-" resource ".jpg")
@@ -211,11 +206,11 @@
    :alignment :bottom-right
    :children (vec (map #(card % "dev") cards))}
   )
-(defn image-group []
+(defn image-group [state]
   {:fx/type     :group
   :translate-x -250
   :translate-y -100
-  :children (vec (generate-image-hex @*state))})
+  :children (vec (generate-image-hex state))})
 (defn player-turn-info
   []
   "label which provides information on whose turn it is"
@@ -291,7 +286,7 @@
    :scene   {:fx/type :scene
              :root    {:fx/type  :stack-pane
                        :style    "-fx-background-color: #1e90ff;"
-                       :children [(hand-view (:hand state))
+                       :children [(hand-view (:hand (first (:players state))))
                                   {:fx/type   :h-box
                                    :alignment :top-left
                                    :children  [{:fx/type   :button
@@ -308,7 +303,7 @@
                                                             (shop-button)
                                                             (hand-dev-view (:dev-cards state))
                                                             (end-turn-btn)]}]}
-                                  (image-group)
+                                  (image-group state)
                                   (roads-view)
                                   (spots-view)
                                   ]}}})
@@ -386,8 +381,24 @@
                                      :translate-y 200
                                      }
                                     ]}}})
-(defn handle-click [coordinates]
-  (println "Clicked:" coordinates))
+
+(defn take-resources [coords number]
+  "function which from board when you pass coordinates of one spots and number and extract info of resources
+  connected with that spot"
+  (map :resource
+       (filter (fn [area]
+                 (some (fn [spot] (= coords spot)) (:spots area)))
+               (filter #(= (str number) (:number %)) (:areas @*state))
+               )))
+
+
+(defn filing-hand-with-resource [coordinates number]
+  (swap! *state update :players (fn [players]
+                           (mapv #(update % :hand into (vec (take-resources coordinates number))) players))))
+
+
+
+
 (defn handle-road-click [coordinates]
   (println "Clicked:" coordinates))
 (defn handle-numbers-click [number]
@@ -397,7 +408,6 @@
   (swap! state update player-key
          (fn [existing-players]
            (conj existing-players (player/create-player name color)))))
-
 (defn player-turn-inc
   [number num-players]
   "function that increments the player's ordinal number so that we know who has the move,
@@ -406,8 +416,6 @@
     1
     (inc number))
   )
-
-
 (defn event-handler [event]
   (case (:event/type event)
     :add (do
@@ -417,19 +425,17 @@
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-    :spots-click (handle-click (:spot-coordinates event))
+    :spots-click (filing-hand-with-resource (:spot-coordinates event) (+ (:dice-1 @*state) (:dice-2 @*state)))
     :roads-click (handle-road-click (:road-coordinates event))
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
     :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
     nil))
-
 (def renderer
   (fx/create-renderer
     :opts {:fx.opt/map-event-handler event-handler}))
-
-
 (defn start-game []
   (fx/mount-renderer *state renderer)
   (swap! *state assoc :fx/type start-game-view))
+
