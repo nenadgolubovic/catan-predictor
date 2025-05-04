@@ -184,6 +184,7 @@
   (let [areas (vec (:areas state))]
     (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) areas)
          ))
+
 (defn card
   [resource type]
   (let [image-path (str "file:resources/static/"type"-" resource ".jpg")
