@@ -15,8 +15,19 @@
            [javafx.scene.image Image]
            [javafx.geometry Rectangle2D]))
 
+(def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
+(def points (spots/make-spots-from-centers centers))
+(def r (roads/roads points))
 
-(def *state (atom {:player-turn 1}))
+(def *state (atom {:player-turn 1 :areas (vec (area/create-areas-from-centers points centers
+                                                                              (atom ["wool" "wool" "wool" "wool"
+                                                                                     "brick" "brick" "brick"
+                                                                                     "wood" "wood" "wood" "wood"
+                                                                                     "ore" "ore" "ore"
+                                                                                     "grain" "grain" "grain" "grain"
+                                                                                     "dust"] )
+                                                                              (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
+                                                                                     "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))} ))
 
 
 
@@ -78,9 +89,7 @@
    :children
    (dices-button)})
 
-(def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
-(def points (spots/make-spots-from-centers centers))
-(def r (roads/roads points))
+
 
 
 (defn input-box-player-name []
@@ -171,17 +180,9 @@
     {:fx/type :group
      :children [(hexagon x y image)
                 (circle x y circle-image)]})
-(defn generate-image-hex []
-  (let [data (vec (area/create-areas-from-centers points centers
-                                                  (atom ["wool" "wool" "wool" "wool"
-                                                         "brick" "brick" "brick"
-                                                         "wood" "wood" "wood" "wood"
-                                                         "ore" "ore" "ore"
-                                                         "grain" "grain" "grain" "grain"
-                                                         "dust"] )
-                                                  (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
-                                                         "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))]
-    (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) data)
+(defn generate-image-hex [state]
+  (let [areas (vec (:areas state))]
+    (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) areas)
          ))
 (defn card
   [resource type]
@@ -213,15 +214,13 @@
   {:fx/type     :group
   :translate-x -250
   :translate-y -100
-  :children (vec (generate-image-hex))})
+  :children (vec (generate-image-hex @*state))})
 (defn player-turn-info
   []
   "label which provides information on whose turn it is"
   {:fx/type :label
    :text (str "Player " (:name (nth (seq (:players @*state)) (- (:player-turn @*state) 1))))
    :style "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;"})
-
-
 (defn end-turn-btn
   []
   {:fx/type   :button

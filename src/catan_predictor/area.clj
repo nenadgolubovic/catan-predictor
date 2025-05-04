@@ -37,7 +37,7 @@
   spots (all spots connected with that area)
   number (dice number which provide resource)"
   (let [center center
-        resource (rand-nth @resources)     ; Randomly pick a resource
+        resource (rand-nth @resources)
         number (if (= "dust" resource)
                  nil
                  (rand-nth @numbers))
