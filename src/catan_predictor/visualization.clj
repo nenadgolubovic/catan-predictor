@@ -18,8 +18,34 @@
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
 (def points (spots/make-spots-from-centers centers))
 (def r (roads/roads points))
-
-(defonce *state (atom {:dice-1 2 :dice-2 2 :player-turn 1 :areas (vec (area/create-areas-from-centers points centers
+(defn create-spot-view [x y]
+  {:fx/type          :circle
+   :center-x         (* 100 x)
+   :center-y         (* 100 y)
+   :radius           10
+   :fill             "white"
+   :on-mouse-clicked {:event/type       :spots-click
+                      :spot-coordinates [x y]}
+   })
+(defn create-line-view [x1 y1 x2 y2]
+  {:fx/type          :line
+   :start-x          (* 100 x1)
+   :start-y          (* 100 y1)
+   :end-x            (* 100 x2)
+   :end-y            (* 100 y2)
+   :stroke           "black"
+   :stroke-width     10
+   :on-mouse-clicked {:event/type       :roads-click
+                      :road-coordinates [[x1 y1] [x2 y2]]}})
+(defonce *state (atom {:dice-1 2
+                       :dice-2 2
+                       :player-turn 1
+                       :spots (map #(create-spot-view (first %) (second %)) points)
+                       :roads (map #(create-line-view (first (first %))
+                                                      (second (first %))
+                                                      (first (second %))
+                                                      (second (second %))) r)
+                       :areas (vec (area/create-areas-from-centers points centers
                                                                               (atom ["wool" "wool" "wool" "wool"
                                                                                      "brick" "brick" "brick"
                                                                                    "wood" "wood" "wood" "wood"
@@ -27,7 +53,38 @@
                                                                                      "grain" "grain" "grain" "grain"
                                                                                      "dust"] )
                                                                               (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
-                                                                                     "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))}))
+                                                                                     "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))
+                       }))
+(defn build-settlement
+  [coords color]
+  (swap! *state update :spots
+         (fn [spots]
+           (mapv (fn [spot]
+                   (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
+                     (assoc spot :fill color)
+                     spot))
+                 spots)))
+  )
+(defn build-town
+  [coords ]
+  (swap! *state update :spots
+         (fn [spots]
+           (mapv (fn [spot]
+                   (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
+                     (assoc spot :radius 20)
+                     spot))
+                 spots)))
+  )
+(defn build-road
+  [road-coords color]
+  (swap! *state update :roads
+         (fn [roads]
+           (mapv (fn [road]
+                   (if (= (:road-coordinates (:on-mouse-clicked road)) road-coords)
+                     (assoc road :stroke color)
+                     road))
+                 roads)))
+  )
 
 
 
@@ -100,39 +157,17 @@
    :prompt-text "Color"
    :on-text-changed {:event/type :set-input-color}
    })
-(defn create-spot-view [x y]
-  {:fx/type          :circle
-   :center-x         (* 100 x)
-   :center-y         (* 100 y)
-   :radius           10
-   :fill             "white"
-   :on-mouse-clicked {:event/type       :spots-click
-                      :spot-coordinates [x y]}
-   })
-(defn create-line-view [x1 y1 x2 y2]
-  {:fx/type          :line
-   :start-x          (* 100 x1)
-   :start-y          (* 100 y1)
-   :end-x            (* 100 x2)
-   :end-y            (* 100 y2)
-   :stroke           "black"
-   :stroke-width     10
-   :on-mouse-clicked {:event/type       :roads-click
-                      :road-coordinates [[x1 y1] [x2 y2]]}})
 (defn spots-view []
   {:fx/type     :group
    :translate-x -250
    :translate-y -100
-   :children    (map #(create-spot-view (first %) (second %)) points)
+   :children (:spots @*state)
    })
 (defn roads-view []
   {:fx/type     :group
    :translate-x -250
    :translate-y -100
-   :children    (map #(create-line-view (first (first %))
-                                        (second (first %))
-                                        (first (second %))
-                                        (second (second %))) r)
+   :children (:roads @*state)
    })
 (defn shop-button
   []
@@ -381,7 +416,6 @@
                                      :translate-y 200
                                      }
                                     ]}}})
-
 (defn take-resources [coords number]
   "function which from board when you pass coordinates of one spots and number and extract info of resources
   connected with that spot"
@@ -390,14 +424,9 @@
                  (some (fn [spot] (= coords spot)) (:spots area)))
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
-
-
 (defn filing-hand-with-resource [coordinates number]
   (swap! *state update :players (fn [players]
                            (mapv #(update % :hand into (vec (take-resources coordinates number))) players))))
-
-
-
 
 (defn handle-road-click [coordinates]
   (println "Clicked:" coordinates))
@@ -425,8 +454,9 @@
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-    :spots-click (filing-hand-with-resource (:spot-coordinates event) (+ (:dice-1 @*state) (:dice-2 @*state)))
-    :roads-click (handle-road-click (:road-coordinates event))
+    :spots-click (build-town (:spot-coordinates event))
+    ;(filing-hand-with-resource (:spot-coordinates event) (+ (:dice-1 @*state) (:dice-2 @*state)))
+    :roads-click (build-road (:road-coordinates event) "red")
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
