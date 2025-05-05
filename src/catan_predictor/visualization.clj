@@ -55,18 +55,32 @@
                                                                               (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
                                                                                      "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))
                        }))
+
+
+
 (defn build-settlement
-  [coords color]
-  (swap! *state update :spots
-         (fn [spots]
-           (mapv (fn [spot]
-                   (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
-                     (assoc spot :fill color)
-                     spot))
-                 spots)))
-  )
+  [coords]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+    (swap! *state update :spots
+           (fn [spots]
+             (mapv (fn [spot]
+                     (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
+                       (assoc spot :fill (:color player))
+                       spot))
+                   spots)))
+
+    (swap! *state update :players
+           (fn [players]
+             (into []
+                   (map (fn [v]
+                          (if (= (:name v) (:name player))
+                            (update v :settlement (fnil conj []) coords)
+                            v))
+                        players))))
+
+    ))
 (defn build-town
-  [coords ]
+  [coords]
   (swap! *state update :spots
          (fn [spots]
            (mapv (fn [spot]
@@ -85,9 +99,34 @@
                      road))
                  roads)))
   )
+(def a
+  (atom {:spots
+         [{:fx/type :circle
+           :center-x 433.0
+           :center-y 50.0
+           :radius 10
+           :fill "white"
+           :on-mouse-clicked {:event/type :spots-click
+                              :spot-coordinates [4.33 0.5]}}
 
+          {:fx/type :circle
+           :center-x 346.4
+           :center-y 100.0
+           :radius 10
+           :fill "white"
+           :on-mouse-clicked {:event/type :spots-click
+                              :spot-coordinates [3.464 1.0]}}
 
-
+          {:fx/type :circle
+           :center-x 259.8
+           :center-y 50.0
+           :radius 20
+           :fill "white"
+           :on-mouse-clicked {:event/type :spots-click
+                              :spot-coordinates [2.598 0.5]}}]}))
+(defn get-all-coords-with-big-circle
+      []
+  (filter #(= (:radius %) 20) (:spots @*state)))
 (defn background-image []
   (Background.
     (into-array BackgroundImage
@@ -247,10 +286,10 @@
   :translate-y -100
   :children (vec (generate-image-hex state))})
 (defn player-turn-info
-  []
+  [t]
   "label which provides information on whose turn it is"
   {:fx/type :label
-   :text (str "Player " (:name (nth (seq (:players @*state)) (- (:player-turn @*state) 1))))
+   :text (str "Player " t)
    :style "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;"})
 (defn end-turn-btn
   []
@@ -315,13 +354,15 @@
   )
 (defn choose-spot-for-settlement
   [state]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
   {:fx/type :stage
    :showing true
    :title   "CATAN"
    :scene   {:fx/type :scene
              :root    {:fx/type  :stack-pane
                        :style    "-fx-background-color: #1e90ff;"
-                       :children [(hand-view (:hand (first (:players state))))
+                       :children [
+                                  (hand-view (:hand player))
                                   {:fx/type   :h-box
                                    :alignment :top-left
                                    :children  [{:fx/type   :button
@@ -332,16 +373,17 @@
                                    :children  [{:fx/type   :v-box
                                                 :alignment :center
                                                 :children  [(table-info *state)
-                                                            (player-turn-info)
+                                                            (player-turn-info (:name player))
                                                             (dices-button)
                                                             (dice-views)
                                                             (shop-button)
-                                                            (hand-dev-view (:dev-cards state))
+                                                            (hand-dev-view (:dev-cards player))
                                                             (end-turn-btn)]}]}
                                   (image-group state)
                                   (roads-view)
                                   (spots-view)
-                                  ]}}})
+                                  ]}}}))
+
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
@@ -425,11 +467,9 @@
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
 (defn filing-hand-with-resource [coordinates number]
+  "all players get resource defined with number get on dice"
   (swap! *state update :players (fn [players]
                            (mapv #(update % :hand into (vec (take-resources coordinates number))) players))))
-
-(defn handle-road-click [coordinates]
-  (println "Clicked:" coordinates))
 (defn handle-numbers-click [number]
   (println "Clicked:" number))
 (defn add-player
@@ -445,6 +485,7 @@
     1
     (inc number))
   )
+
 (defn event-handler [event]
   (case (:event/type event)
     :add (do
@@ -453,9 +494,15 @@
     :remove (swap! *state update :players-count dec)
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
-    :dice-view (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-    :spots-click (build-town (:spot-coordinates event))
-    ;(filing-hand-with-resource (:spot-coordinates event) (+ (:dice-1 @*state) (:dice-2 @*state)))
+    :dice-view  (do
+                  (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
+                  (doseq [coord (get-all-coords-with-big-circle)]
+                    (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
+                                               (+ (:dice-1 @*state) (:dice-2 @*state))))
+                  )
+
+
+    :spots-click (build-settlement (:spot-coordinates event))
     :roads-click (build-road (:road-coordinates event) "red")
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
