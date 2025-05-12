@@ -23,7 +23,7 @@
    :center-x         (* 100 x)
    :center-y         (* 100 y)
    :radius           10
-   :fill             "white"
+   :fill             (Color/rgb 210 191 145)
    :on-mouse-clicked {:event/type       :spots-click
                       :spot-coordinates [x y]}
    })
@@ -33,14 +33,14 @@
    :start-y          (* 100 y1)
    :end-x            (* 100 x2)
    :end-y            (* 100 y2)
-   :stroke           "black"
+   :stroke (Color/rgb 210 180 140)
    :stroke-width     10
    :on-mouse-clicked {:event/type       :roads-click
                       :road-coordinates [[x1 y1] [x2 y2]]}})
-(defonce *state (atom {:dice-1 2
-                       :dice-2 2
+(defonce *state (atom {:dice-1      2
+                       :dice-2      2
                        :player-turn 1
-                       :spots (map #(create-spot-view (first %) (second %)) points)
+                       :spots       (map #(create-spot-view (first %) (second %)) points)
                        :roads (map #(create-line-view (first (first %))
                                                       (second (first %))
                                                       (first (second %))
@@ -90,14 +90,25 @@
                  spots)))
   )
 (defn build-road
-  [road-coords color]
-  (swap! *state update :roads
-         (fn [roads]
-           (mapv (fn [road]
-                   (if (= (:road-coordinates (:on-mouse-clicked road)) road-coords)
-                     (assoc road :stroke color)
-                     road))
-                 roads)))
+  [coords]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+
+    (swap! *state update :roads
+           (fn [roads]
+             (mapv (fn [road]
+                     (if (= (:road-coordinates (:on-mouse-clicked road)) coords)
+                       (assoc road :stroke (:color player))
+                       road))
+                   roads)))
+
+    (swap! *state update :players
+           (fn [players]
+             (into []
+                   (map (fn [v]
+                          (if (= (:name v) (:name player))
+                            (update v :roads (fnil conj []) coords)
+                            v))
+                        players)))))
   )
 (def a
   (atom {:spots
@@ -124,9 +135,6 @@
            :fill "white"
            :on-mouse-clicked {:event/type :spots-click
                               :spot-coordinates [2.598 0.5]}}]}))
-(defn get-all-coords-with-big-circle
-      []
-  (filter #(= (:radius %) 20) (:spots @*state)))
 (defn background-image []
   (Background.
     (into-array BackgroundImage
@@ -208,17 +216,48 @@
    :translate-y -100
    :children (:roads @*state)
    })
-(defn shop-button
+(defn buy-settlement-button
   []
   {:fx/type   :button
    :alignment :bottom-right
-   :style     "-fx-background-color: transparent;"
-   :graphic   {:fx/type    :image-view
-               :image      {:fx/type :image
-                            :url  "file:resources/static/shop.png"}
-               :fit-width  200
-               :fit-height 200}
-   :on-action {:event/type :shop-view}
+   :text "Buy Settlement"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 10
+   :on-action {:event/type :buy-settlement-btn}
+   }
+  )
+(defn buy-town-button
+  []
+  {:fx/type   :button
+   :alignment :bottom-right
+   :text "Buy Town"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 10
+   :on-action {:event/type :buy-town-btn}
+   }
+  )
+(defn buy-dev-card-button
+  []
+  {:fx/type   :button
+   :alignment :bottom-right
+   :text "Buy Development Card"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 10
+   :on-action {:event/type :buy-dev-card-btn}
+   }
+  )
+(defn buy-card-button
+  []
+  {:fx/type   :button
+   :alignment :bottom-right
+   :text "Buy Card"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 10
+   :on-action {:event/type :buy-card-btn}
    }
   )
 (defn hexagon [x1 x2 image]
@@ -376,7 +415,10 @@
                                                             (player-turn-info (:name player))
                                                             (dices-button)
                                                             (dice-views)
-                                                            (shop-button)
+                                                            (buy-settlement-button)
+                                                            (buy-town-button)
+                                                            (buy-dev-card-button)
+                                                            (buy-card-button)
                                                             (hand-dev-view (:dev-cards player))
                                                             (end-turn-btn)]}]}
                                   (image-group state)
@@ -467,9 +509,14 @@
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
 (defn filing-hand-with-resource [coordinates number]
-  "all players get resource defined with number get on dice"
-  (swap! *state update :players (fn [players]
-                           (mapv #(update % :hand into (vec (take-resources coordinates number))) players))))
+  "Players who have a settlement on the coordinates get the resources"
+  (swap! *state update :players
+         (fn [players]
+           (mapv (fn [player]
+                   (if (some #{coordinates} (:settlement player))
+                     (update player :hand into (vec (take-resources coordinates number)))
+                     player))
+                 players))))
 (defn handle-numbers-click [number]
   (println "Clicked:" number))
 (defn add-player
@@ -496,18 +543,20 @@
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view  (do
                   (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-                  (doseq [coord (get-all-coords-with-big-circle)]
+                  (doseq [coord (:spots @*state)]
                     (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                (+ (:dice-1 @*state) (:dice-2 @*state))))
                   )
-
-
     :spots-click (build-settlement (:spot-coordinates event))
-    :roads-click (build-road (:road-coordinates event) "red")
+    :roads-click (build-road (:road-coordinates event))
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
     :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
+    :buy-dev-card-btn ()
+    :buy-settlement-btn
+    :buy-town-btn
+    :buy-card-btn
     nil))
 (def renderer
   (fx/create-renderer
