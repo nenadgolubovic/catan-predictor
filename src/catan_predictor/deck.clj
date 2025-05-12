@@ -14,9 +14,6 @@
     (swap! deck-atom (fn [deck] (shop/remove-card chosen deck)))
     chosen))
 
-(get-random-card deck-development-card)
-
-(print @deck-development-card)
 
 (defn take-development-card
   [hand deck hand-dev-cards]

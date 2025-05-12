@@ -1,12 +1,15 @@
 (ns catan-predictor.visualization
-  (:require [cljfx.api :as fx]
+  (:require [catan-predictor.shop :as shop]
+            [cljfx.api :as fx]
             [catan-predictor.utils :as utils]
             [catan-predictor.spots :as spots]
             [catan-predictor.roads :as roads]
             [catan-predictor.area :as area]
             [catan-predictor.centers :as centers]
             [catan-predictor.player :as player]
-            [cljfx.fx :as fx-elem])
+            [catan-predictor.deck :as deck]
+            [cljfx.fx :as fx-elem]
+            )
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
            [javafx.scene.shape Polygon]
@@ -54,6 +57,11 @@
                                                                                      "dust"] )
                                                                               (atom ["2" "3" "3" "4" "4" "5" "5" "6" "6"
                                                                                      "8" "8" "9" "9" "10" "10" "11" "11" "12" ])))
+                       :development-deck ["knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight"
+                                          "victory-point" "victory-point" "victory-point" "victory-point" "victory-point"
+                                          "road-building" "road-building"
+                                          "monopoly" "monopoly"
+                                          "year-of-plenty" "year-of-plenty"]
                        }))
 
 
@@ -425,7 +433,6 @@
                                   (roads-view)
                                   (spots-view)
                                   ]}}}))
-
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
@@ -532,6 +539,15 @@
     1
     (inc number))
   )
+(defn take-development-card []
+  (let [player-idx (dec (:player-turn @*state))
+        chosen (rand-nth (:development-deck @*state))]
+    (swap! *state update :development-deck #(shop/remove-card chosen %))
+    (swap! *state update-in [:players player-idx :dev-cards] #(conj % chosen))
+    (swap! *state update-in [:players player-idx :hand] shop/buy-development-card)
+    (println "Chosen card:" chosen)))
+
+
 
 (defn event-handler [event]
   (case (:event/type event)
@@ -553,7 +569,7 @@
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
     :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
-    :buy-dev-card-btn ()
+    :buy-dev-card-btn (take-development-card)
     :buy-settlement-btn
     :buy-town-btn
     :buy-card-btn
