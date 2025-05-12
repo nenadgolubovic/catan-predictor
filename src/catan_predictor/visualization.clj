@@ -13,10 +13,23 @@
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
            [javafx.scene.shape Polygon]
-           [javafx.scene.paint Color]
+           [javafx.scene.paint Color]W
            [javafx.scene.paint ImagePattern]
            [javafx.scene.image Image]
            [javafx.geometry Rectangle2D]))
+
+
+;Have to add functionality:
+  ;to can choose color in dropdown list, and if chose that dropdown no can choose
+  ;message that player has added
+  ; On start of game make that player can choose start settlement and road and all players that can choose
+  ; After that go to game
+  ; add function to for dice 7
+  ; add validation that you buy road if you not have settlement nears by
+  ; validation that you cannot buy settlement if you not have connection with road
+  ; calculatiuon in table of vp
+  ; buy cards for 4 yours
+  ; to can activate dev cards
 
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
 (def points (spots/make-spots-from-centers centers))
