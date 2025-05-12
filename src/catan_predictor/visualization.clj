@@ -43,6 +43,9 @@
 (defonce *state (atom {:dice-1      2
                        :dice-2      2
                        :player-turn 1
+                       :town-build false
+                       :settlement-build false
+                       :road-build false
                        :spots       (map #(create-spot-view (first %) (second %)) points)
                        :roads (map #(create-line-view (first (first %))
                                                       (second (first %))
@@ -68,7 +71,14 @@
 
 (defn build-settlement
   [coords]
-  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
+        player-idx (dec (:player-turn @*state))]
+
+    (try
+      (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
+      (catch Exception e
+        (println "No resource")))
+
     (swap! *state update :spots
            (fn [spots]
              (mapv (fn [spot]
@@ -85,18 +95,46 @@
                             (update v :settlement (fnil conj []) coords)
                             v))
                         players))))
-
+    (println "Updated player info:" (get (vec (:players @*state)) player-idx))
     ))
 (defn build-town
   [coords]
-  (swap! *state update :spots
-         (fn [spots]
-           (mapv (fn [spot]
-                   (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
-                     (assoc spot :radius 20)
-                     spot))
-                 spots)))
-  )
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
+        player-idx (dec (:player-turn @*state))]
+
+    (if (some #(= coords %) (:settlement player))
+      (do
+        (try
+          (swap! *state update-in [:players player-idx :hand] shop/buy-town)
+          (catch Exception e
+            (println "No resource")))
+        (try
+          (swap! *state update-in [:players player-idx :settlement] (fn [settlement] (remove #(= % coords) settlement)))
+          (catch Exception e
+            (println "Not your settlement")))
+        (swap! *state update :players
+               (fn [players]
+                 (into []
+                       (map (fn [v]
+                              (if (= (:name v) (:name player))
+                                (update v :towns (fnil conj []) coords)
+                                v))
+                            players))))
+
+        (swap! *state update :spots
+               (fn [spots]
+                 (mapv (fn [spot]
+                         (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
+                           (assoc spot :radius 20)
+                           spot))
+                       spots))))
+      (print "Not your settlement, you have to build settlement first, then town ")
+      )
+
+
+  ))
+
+
 (defn build-road
   [coords]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
@@ -118,6 +156,7 @@
                             v))
                         players)))))
   )
+
 (def a
   (atom {:spots
          [{:fx/type :circle
@@ -244,6 +283,17 @@
    :padding   10
    :v-box/margin 10
    :on-action {:event/type :buy-town-btn}
+   }
+  )
+(defn buy-road-button
+  []
+  {:fx/type   :button
+   :alignment :bottom-right
+   :text "Buy Road"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :padding   10
+   :v-box/margin 10
+   :on-action {:event/type :buy-road-btn}
    }
   )
 (defn buy-dev-card-button
@@ -425,6 +475,7 @@
                                                             (dice-views)
                                                             (buy-settlement-button)
                                                             (buy-town-button)
+                                                            (buy-road-button)
                                                             (buy-dev-card-button)
                                                             (buy-card-button)
                                                             (hand-dev-view (:dev-cards player))
@@ -563,15 +614,36 @@
                     (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                (+ (:dice-1 @*state) (:dice-2 @*state))))
                   )
-    :spots-click (build-settlement (:spot-coordinates event))
-    :roads-click (build-road (:road-coordinates event))
+    :spots-click (let [coords (:spot-coordinates event)]
+                   (cond
+                     (:settlement-build @*state) (build-settlement coords)
+                     (:town-build @*state) (build-town coords)
+                     :else (println "Nothing active to build"))
+                   (swap! *state assoc :settlement-build false)
+                   (swap! *state assoc :town-build false))
+
+    :roads-click (if (:road-build @*state)
+                   (do (build-road (:road-coordinates event))
+                       (swap! *state assoc :road-build false))
+                   (println "No active to build road, press buy road button"))
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
     :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
     :buy-dev-card-btn (take-development-card)
-    :buy-settlement-btn
-    :buy-town-btn
+    :buy-settlement-btn (do
+                          (swap! *state assoc :settlement-build true)
+                          (swap! *state assoc :town-build false)
+                          (swap! *state assoc :road-build false))
+    :buy-town-btn (do
+                    (swap! *state assoc :town-build true)
+                    (swap! *state assoc :settlement-build false)
+                    (swap! *state assoc :road-build false))
+
+    :buy-road-btn (do
+                    (swap! *state assoc :road-build true)
+                    (swap! *state assoc :town-build false)
+                    (swap! *state assoc :settlement-build false))
     :buy-card-btn
     nil))
 (def renderer
