@@ -20,10 +20,6 @@
 
 
 ;Have to add functionality:
-  ;to can choose color in dropdown list, and if chose that dropdown no can choose
-  ;message that player has added
-  ; On start of game make that player can choose start settlement and road and all players that can choose
-  ; After that go to game
   ; add function to for dice 7
   ; add validation that you buy road if you not have settlement nears by
   ; validation that you cannot buy settlement if you not have connection with road
@@ -59,6 +55,8 @@
                        :town-build false
                        :settlement-build false
                        :road-build false
+                       :phase "Initial"
+                       :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
                        :players []
                        :players-count 0
                        :spots       (map #(create-spot-view (first %) (second %)) points)
@@ -466,8 +464,8 @@
   [t]
   "label which provides information on whose turn it is"
   {:fx/type :label
-   :text (str "Player " t)
-   :style "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;"})
+   :text (str "PLAYER TURN: " t)
+   :style "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"})
 (defn end-turn-btn
   []
   {:fx/type   :button
@@ -526,41 +524,45 @@
    :height 500
    }
   )
-(defn choose-spot-for-settlement
+(defn game-view
   [state]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
-  {:fx/type :stage
-   :showing true
-   :title   "CATAN"
-   :scene   {:fx/type :scene
-             :root    {:fx/type  :stack-pane
-                       :style    "-fx-background-color: #1e90ff;"
-                       :children [
-                                  (hand-view (:hand player))
-                                  {:fx/type   :h-box
-                                   :alignment :top-left
-                                   :children  [{:fx/type   :button
-                                                :text      "Exit from the game"
-                                                :on-action {:event/type :start-game-view}}]}
-                                  {:fx/type   :h-box
-                                   :alignment :center-right
-                                   :children  [{:fx/type   :v-box
-                                                :alignment :center
-                                                :children  [(table-info *state)
-                                                            (player-turn-info (:name player))
-                                                            (dices-button)
-                                                            (dice-views)
-                                                            (buy-settlement-button)
-                                                            (buy-town-button)
-                                                            (buy-road-button)
-                                                            (buy-dev-card-button)
-                                                            (buy-card-button)
-                                                            (hand-dev-view (:dev-cards player))
-                                                            (end-turn-btn)]}]}
-                                  (image-group state)
-                                  (roads-view)
-                                  (spots-view)
-                                  ]}}}))
+    {:fx/type :stage
+     :showing true
+     :title   "CATAN"
+     :scene   {:fx/type :scene
+               :root    {:fx/type  :border-pane
+                         :style    "-fx-background-color: #1e90ff;"
+                         :top {:fx/type   :v-box
+                               :alignment :center
+                               :padding   10
+                               :children  [(player-turn-info (:name player))]}
+                         :left {:fx/type   :v-box
+                                :padding   10
+                                :alignment :top-left
+                                :children  [{:fx/type   :button
+                                             :text      "Exit from the game"
+                                             :on-action {:event/type :start-game-view}}]}
+
+                         :right {:fx/type   :v-box
+                                 :spacing   10
+                                 :padding   10
+                                 :alignment :center
+                                 :children  [(table-info *state)
+                                             (dices-button)
+                                             (dice-views)
+                                             (buy-settlement-button)
+                                             (buy-town-button)
+                                             (buy-road-button)
+                                             (buy-dev-card-button)
+                                             (buy-card-button)
+                                             (hand-dev-view (:dev-cards player))
+                                             (end-turn-btn)]}
+                         :bottom (hand-view (:hand player))
+                         :center {:fx/type :stack-pane
+                                  :children [(image-group state)
+                                             (roads-view)
+                                             (spots-view)]}}}}))
 
 
 
@@ -612,7 +614,42 @@
                                            -fx-background-radius: 5px;
                                            -fx-min-width: 400px;
                                            -fx-min-height: 100px;"
-                                   :on-action {:event/type :choose-spot-for-settlement}}]}}})
+                                   :on-action {:event/type :initial-phase-game}}]}}})
+
+(defn initial-phase-game
+  [state]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+    {:fx/type :stage
+     :showing true
+     :title   "GAME SETUP - CATAN"
+     :scene   {:fx/type :scene
+               :root    {:fx/type  :stack-pane
+                         :style    "-fx-background-color: #1e90ff;"
+                         :children [
+                                    {:fx/type   :v-box
+                                     :alignment :top-center
+                                     :padding   10
+                                     :children  [{:fx/type :label
+                                                  :text    (:initial-info @*state)
+                                                  :style   "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"}
+                                                 (player-turn-info (:name player))]}
+                                    {:fx/type   :h-box
+                                     :alignment :top-left
+                                     :padding   10
+                                     :children  [{:fx/type   :button
+                                                  :text      "Exit from the game"
+                                                  :on-action {:event/type :start-game-view}}]}
+                                    {:fx/type   :h-box
+                                     :alignment :center-right
+                                     :children  [{:fx/type   :v-box
+                                                  :alignment :center
+                                                  :children  [(table-info *state)
+                                                              (end-turn-btn)]}]}
+                                    (hand-view (:hand player))
+                                    (image-group state)
+                                    (roads-view)
+                                    (spots-view)
+                                    ]}}}))
 
 (defn take-resources [coords number]
   "function which from board when you pass coordinates of one spots and number and extract info of resources
@@ -622,6 +659,7 @@
                  (some (fn [spot] (= coords spot)) (:spots area)))
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
+
 (defn filing-hand-with-resource [coordinates number]
   "Players who have a settlement on the coordinates get the resources"
   (swap! *state update :players
@@ -646,6 +684,12 @@
     1
     (inc number))
   )
+(defn player-turn-dec
+  [number]
+  "function that increments the player's ordinal number so that we know who has the move,
+  if the last player plays then the next player with ordinal number 1"
+   (dec number))
+
 (defn take-development-card []
   (let [player-idx (dec (:player-turn @*state))
         chosen (rand-nth (:development-deck @*state))]
@@ -677,7 +721,9 @@
                              (fn [players]
                                (vec (concat (take idx players) (drop (inc idx) players)))))
                      (update :players-count dec))))))
-    :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
+    :initial-phase-game (do
+                          (swap! *state assoc :fx/type initial-phase-game)
+                          (swap! *state assoc :settlement-build true))
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view  (do
                   (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
@@ -685,18 +731,77 @@
                     (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                (+ (:dice-1 @*state) (:dice-2 @*state))))
                   )
-    :spots-click (let [coords (:spot-coordinates event)]
-                   (cond
-                     (:settlement-build @*state) (build-settlement coords)
-                     (:town-build @*state) (build-town coords)
-                     :else (println "Nothing active to build"))
-                   (swap! *state assoc :settlement-build false)
-                   (swap! *state assoc :town-build false))
+    :spots-click
+      (let [coords (:spot-coordinates event)
+            phase  (:phase @*state)
+            areas (:areas @*state)
+            player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+        (cond
+          (= phase "Initial")
+          (do
+            (when (:settlement-build @*state)
+              (build-settlement coords))
+            (swap! *state assoc :settlement-build false)
+            (swap! *state assoc :road-build true)
+            (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL ROAD CONNECTED WITH YOUR SETTLEMENT"))
 
-    :roads-click (if (:road-build @*state)
-                   (do (build-road (:road-coordinates event))
-                       (swap! *state assoc :road-build false))
-                   (println "No active to build road, press buy road button"))
+          (= phase "Second-Initial")
+          (do
+            (when (:settlement-build @*state)
+              (build-settlement coords))
+            (swap! *state assoc :settlement-build false)
+            (swap! *state assoc :road-build true)
+            (swap! *state assoc :initial-info "SECOND INITIAL PHASE, SELECT ROAD CONNECTED TO YOUR SETTLEMENT")
+            (let [matched-areas (filter (fn [area] (some #{coords} (:spots area))) areas)
+                  all-resources (map :resource matched-areas)
+                  player-turn (:player-turn @*state)
+                  player-idx (dec player-turn)]
+              (swap! *state assoc-in [:players player-idx :hand] all-resources))
+            )
+        :else
+        (do
+          (cond
+            (:settlement-build @*state) (build-settlement coords)
+            (:town-build @*state)       (build-town coords)
+            :else                       (println "Nothing active to build"))
+          (swap! *state assoc :settlement-build false)
+          (swap! *state assoc :town-build false))))
+
+    :roads-click
+    (let [road-coords (:road-coordinates event)
+          phase       (:phase @*state)
+          road-active (:road-build @*state)
+          player-turn (:player-turn @*state)
+          player-count (count (:players @*state))]
+      (if road-active
+        (do
+          (build-road road-coords)
+          (swap! *state assoc :road-build false)
+
+          (when (= phase "Initial")
+            (if (= player-turn player-count)
+              (do
+                (swap! *state assoc :phase "Second-Initial")
+                (swap! *state assoc :settlement-build true)
+                (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT"))
+              (do
+                (swap! *state assoc :settlement-build true)
+                (swap! *state update :player-turn #(player-turn-inc % player-count))
+                (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
+          (when (= phase "Second-Initial")
+            (swap! *state assoc :settlement-build true)
+            (when (= player-turn 1)
+              (swap! *state assoc :phase "Game")
+              (swap! *state assoc :initial-info "GAME")
+              (swap! *state assoc :settlement-build false)
+              (swap! *state assoc :fx/type game-view))
+            (when (not= player-turn 1)
+              (swap! *state update :player-turn #(player-turn-dec %))
+              (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
+        (println "No active to build road, press buy road button")))
+
+
+
     :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
@@ -710,7 +815,6 @@
                     (swap! *state assoc :town-build true)
                     (swap! *state assoc :settlement-build false)
                     (swap! *state assoc :road-build false))
-
     :buy-road-btn (do
                     (swap! *state assoc :road-build true)
                     (swap! *state assoc :town-build false)
