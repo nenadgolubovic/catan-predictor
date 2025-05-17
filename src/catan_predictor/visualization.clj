@@ -13,7 +13,7 @@
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
            [javafx.scene.shape Polygon]
-           [javafx.scene.paint Color]W
+           [javafx.scene.paint Color]
            [javafx.scene.paint ImagePattern]
            [javafx.scene.image Image]
            [javafx.geometry Rectangle2D]))
@@ -59,6 +59,8 @@
                        :town-build false
                        :settlement-build false
                        :road-build false
+                       :players []
+                       :players-count 0
                        :spots       (map #(create-spot-view (first %) (second %)) points)
                        :roads (map #(create-line-view (first (first %))
                                                       (second (first %))
@@ -79,6 +81,74 @@
                                           "monopoly" "monopoly"
                                           "year-of-plenty" "year-of-plenty"]
                        }))
+
+
+
+;Start of game elements:
+(defn background-image []
+  (Background.
+    (into-array BackgroundImage
+                [(BackgroundImage.
+                   (Image. "file:resources/static/start-manu-background.jpg")
+                   BackgroundRepeat/NO_REPEAT
+                   BackgroundRepeat/NO_REPEAT
+                   BackgroundPosition/CENTER
+                   (BackgroundSize. 1000 1000 true true true false))])))
+(defn add-button []
+  {:fx/type :button
+   :text "Add Player"
+   :style     "-fx-font-size: 20px;
+                -fx-font-weight: bold;
+                -fx-background-color: #3F51B5;
+                -fx-text-fill: white;
+                -fx-padding: 10px 20px;
+                -fx-background-radius: 5px;
+                -fx-min-width: 200px;
+                -fx-min-height: 60px;"
+   :disable (or (clojure.string/blank? (:input-name @*state))
+                (nil? (:input-color @*state)))
+   :on-action {:event/type :add}
+   })
+(defn remove-button [idx]
+  {:fx/type   :button
+   :text      "X"
+   :style     "-fx-font-size: 10px;
+                -fx-font-weight: bold;
+                -fx-background-color: #3F51B5;
+                -fx-text-fill: white;
+                -fx-padding: 10px 20px;
+                -fx-background-radius: 5px;
+                -fx-min-width: 20px;
+                -fx-min-height: 20px;"
+   :on-action {:event/type :remove
+               :index idx}})
+(defn player-list []
+  {:fx/type :v-box
+   :spacing 10
+   :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
+   :children
+   (concat
+     [{:fx/type :h-box
+       :style  "-fx-font-weight: bold; -fx-padding: 5;"
+       :spacing 20
+       :children [{:fx/type :label :text "Name" :style "-fx-pref-width: 150px;"}
+                  {:fx/type :label :text "Color" :style "-fx-pref-width: 150px;"}
+                  {:fx/type :label :text "Remove" :style "-fx-pref-width: 200px;"}]}]
+     (map-indexed
+       (fn [idx {:keys [name color]}]
+         {:fx/type :h-box
+          :spacing 20
+          :alignment :center-left
+          :style "-fx-padding: 5; -fx-border-color: lightgray; -fx-border-width: 0 0 1 0;"
+          :children [{:fx/type :label
+                      :text name
+                      :style "-fx-pref-width: 150px;"}
+                     {:fx/type :label
+                      :text color
+                      :style "-fx-pref-width: 150px;"}
+                     (remove-button idx)]})
+       (:players @*state)))})
+
 
 
 
@@ -170,6 +240,18 @@
                         players)))))
   )
 
+
+(defn color-dropdown []
+  (let [all-colors ["red" "blue" "yellow" "green"]
+        used-colors (set (map :color (:players @*state)))
+        available-colors (remove used-colors all-colors)]
+    {:fx/type :combo-box
+     :prompt-text "Choose color"
+     :value (:input-color @*state)
+     :items (vec available-colors)
+     :on-value-changed #(swap! *state assoc :input-color %) }))
+
+
 (def a
   (atom {:spots
          [{:fx/type :circle
@@ -195,15 +277,7 @@
            :fill "white"
            :on-mouse-clicked {:event/type :spots-click
                               :spot-coordinates [2.598 0.5]}}]}))
-(defn background-image []
-  (Background.
-    (into-array BackgroundImage
-                [(BackgroundImage.
-                   (Image. "file:resources/static/start-manu-background.jpg")
-                   BackgroundRepeat/NO_REPEAT
-                   BackgroundRepeat/NO_REPEAT
-                   BackgroundPosition/CENTER
-                   (BackgroundSize. 1000 1000 true true true false))])))
+
 (defn get-dice-image-url
   [dice-number]
   "get image depends on dice numer"
@@ -252,18 +326,11 @@
    :alignment :center
    :children
    (dices-button)})
-(defn input-box-player-name []
+(defn name-input []
   {:fx/type :text-field
+   :prompt-text "Enter name"
    :text (:input-name @*state)
-   :prompt-text "Player name"
-   :on-text-changed  {:event/type :set-input-name}
-   })
-(defn input-box-player-color []
-  {:fx/type :text-field
-   :text (:set-input-color @*state)
-   :prompt-text "Color"
-   :on-text-changed {:event/type :set-input-color}
-   })
+   :on-text-changed #(swap! *state assoc :input-name %)})
 (defn spots-view []
   {:fx/type     :group
    :translate-x -250
@@ -412,48 +479,45 @@
    })
 (defn table-info
   [state]
-  {:fx/type :table-view
-   :column-resize-policy :constrained
-   :style "-fx-background-color: transparent;
-         -fx-control-inner-background: transparent;
-         -fx-table-cell-border-color: transparent;
-         -fx-table-header-border-color: transparent;
-         -fx-selection-bar: transparent;
-         -fx-selection-bar-non-focused: transparent;"
-   :items (vec (map (fn [player]
-                 {:player (:name player)
-                  :victory-points (or (:victory-points player) 0)
-                  :road-length (or (:road-length player) 0)
-                  :army-size (or (:knight-length player) 0)
-                  :color (:color player)})
-               (:players @state)))
+  {:fx/type :v-box
+   :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
+   :children
+   [{:fx/type :table-view
+     :column-resize-policy :constrained
+     :style "-fx-background-color: white;
+             -fx-control-inner-background: white;
+             -fx-table-cell-border-color: lightgray;
+             -fx-table-header-border-color: lightgray;
+             -fx-selection-bar: #cce5ff;
+             -fx-selection-bar-non-focused: #99ccff;"
+     :items (vec (map (fn [player]
+                        {:player (:name player)
+                         :victory-points (or (:victory-points player) 0)
+                         :road-length (or (:road-length player) 0)
+                         :army-size (or (:knight-length player) 0)
+                         :color (:color player)})
+                      (:players @state)))
+     :columns [{:fx/type :table-column
+                :text "Player"
+                :cell-value-factory :player
+                :style "-fx-font-size: 20px; -fx-text-fill: black;"}
+               {:fx/type :table-column
+                :text "Victory Points"
+                :cell-value-factory :victory-points
+                :style "-fx-font-size: 20px; -fx-text-fill: black;"}
+               {:fx/type :table-column
+                :text "Road Length"
+                :cell-value-factory :road-length
+                :style "-fx-font-size: 20px; -fx-text-fill: black;"}
+               {:fx/type :table-column
+                :text "Army Size"
+                :cell-value-factory :army-size
+                :style "-fx-font-size: 20px; -fx-text-fill: black;"}
+               {:fx/type :table-column
+                :text "Color"
+                :cell-value-factory :color
+                :style "-fx-font-size: 20px; -fx-text-fill: black;"}]}]})
 
-   :columns [{:fx/type :table-column
-              :text "Player"
-              :cell-value-factory :player
-              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
-              }
-             {:fx/type :table-column
-              :text "Victory Points"
-              :cell-value-factory :victory-points
-              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
-              }
-             {:fx/type :table-column
-              :text "Road Length"
-              :cell-value-factory :road-length
-              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
-              }
-             {:fx/type :table-column
-              :text "Army Size"
-              :cell-value-factory :army-size
-              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
-              }
-             {:fx/type :table-column
-              :text "Color"
-              :cell-value-factory :color
-              :style "-fx-background-color: transparent; -fx-text-fill: black; -fx-font-size: 30px;"
-              }
-             ]})
 (defn shop []
   {:fx/type :stage
    :showing true
@@ -497,80 +561,59 @@
                                   (roads-view)
                                   (spots-view)
                                   ]}}}))
+
+
+
+
+;state of game
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
    :title   "CATAN"
    :scene   {:fx/type :scene
-             :root    {:fx/type    :stack-pane
-                       :alignment  :center
+             :root    {:fx/type    :v-box
+                       :alignment :top-center
+                       :spacing   20
+                       :padding   20
                        :background (background-image)
-                       :children   [{:fx/type     :label
-                                     :text        "WELCOME TO CATAN!"
-                                     :style       "-fx-text-fill: #FFD700;
-                                      -fx-font-size: 100px;
-                                      -fx-font-weight: bold;
-                                      -fx-background-color: rgba(0, 0, 0, 0.5);
-                                      -fx-padding: 20px 20px 20px 20px;
-                                      -fx-background-radius: 10px;"
-                                     :translate-y -500}
 
-                                    {:fx/type     :h-box
-                                     :spacing     20
-                                     :alignment   :center
-                                     :children    [{:fx/type   :button
-                                                    :text      "Add"
-                                                    :style     "-fx-font-size: 20px;
-                                                  -fx-font-weight: bold;
-                                                  -fx-background-color: #3F51B5;
-                                                  -fx-text-fill: white;
-                                                  -fx-padding: 10px 20px;
-                                                  -fx-background-radius: 5px;
-                                                  -fx-min-width: 200px;
-                                                  -fx-min-height: 60px;"
-                                                    :on-action {:event/type :add}}
+                       :children [{:fx/type :label
+                                   :text "WELCOME TO CATAN!"
+                                   :style "-fx-text-fill: #FFD700;
+                                           -fx-font-size: 60px;
+                                           -fx-font-weight: bold;
+                                           -fx-background-color: rgba(0, 0, 0, 0.5);
+                                           -fx-padding: 20px 40px;
+                                           -fx-background-radius: 10px;"
+                                   }
 
-                                                   {:fx/type   :button
-                                                    :text      "Remove"
-                                                    :style     "-fx-font-size: 20px;
-                                                  -fx-font-weight: bold;
-                                                  -fx-background-color: #3F51B5;
-                                                  -fx-text-fill: white;
-                                                  -fx-padding: 10px 20px;
-                                                  -fx-background-radius: 5px;
-                                                  -fx-min-width: 200px;
-                                                  -fx-min-height: 60px;"
-                                                    :on-action {:event/type :remove}}
-                                                   (input-box-player-name)
-                                                   (input-box-player-color)]
-                                                   :translate-y 100}
-                                    {:fx/type     :label
-                                     :text        (str "Number of players " (:players-count state))
-                                     :style       "-fx-font-size: 20px;
-                                                  -fx-font-weight: bold;
-                                                  -fx-background-color: #009688;
-                                                  -fx-text-fill: white;
-                                                  -fx-padding: 10px 20px;
-                                                  -fx-background-radius: 5px;
-                                                  -fx-min-width: 200px;
-                                                  -fx-min-height: 60px;"
+                                  {:fx/type :v-box
+                                   :style "-fx-background-color: white;
+                                           -fx-padding: 15px;
+                                           -fx-background-radius: 10px;
+                                           -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);"
+                                   :max-width 600
+                                   :children [(player-list)]}
 
-                                     :translate-y 0}
+                                  {:fx/type :h-box
+                                   :spacing 20
+                                   :alignment :center
+                                   :children [(add-button)
+                                              (name-input)
+                                              (color-dropdown)]}
 
-                                    {:fx/type     :button
-                                     :text        "Start Game"
-                                     :style       "-fx-font-size: 40px;
-                                                  -fx-font-weight: bold;
-                                                  -fx-background-color: #FF5722;
-                                                  -fx-text-fill: white;
-                                                  -fx-padding: 10px 20px;
-                                                  -fx-background-radius: 5px;
-                                                  -fx-min-width: 400px;
-                                                  -fx-min-height: 100px;"
-                                     :on-action   {:event/type :choose-spot-for-settlement}
-                                     :translate-y 200
-                                     }
-                                    ]}}})
+                                  {:fx/type :button
+                                   :text "Start Game"
+                                   :style "-fx-font-size: 40px;
+                                           -fx-font-weight: bold;
+                                           -fx-background-color: #FF5722;
+                                           -fx-text-fill: white;
+                                           -fx-padding: 10px 20px;
+                                           -fx-background-radius: 5px;
+                                           -fx-min-width: 400px;
+                                           -fx-min-height: 100px;"
+                                   :on-action {:event/type :choose-spot-for-settlement}}]}}})
+
 (defn take-resources [coords number]
   "function which from board when you pass coordinates of one spots and number and extract info of resources
   connected with that spot"
@@ -616,9 +659,24 @@
 (defn event-handler [event]
   (case (:event/type event)
     :add (do
-           (add-player *state :players (:input-name @*state) (:input-color @*state))
+           (swap! *state
+                  (fn [s]
+                    (-> s
+                        (update :players conj {:name (:input-name s)
+                                               :color (:input-color s)})
+                        (assoc :input-name "" :input-color nil))))
            (println "Current *state after ADD:" @*state))
-    :remove (swap! *state update :players-count dec)
+    :remove
+    (let [idx (:index event)]
+      (println "Remove player with idx:" idx)
+      (when (some? idx)
+        (swap! *state
+               (fn [s]
+                 (-> s
+                     (update :players
+                             (fn [players]
+                               (vec (concat (take idx players) (drop (inc idx) players)))))
+                     (update :players-count dec))))))
     :choose-spot-for-settlement (swap! *state assoc :fx/type choose-spot-for-settlement)
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view  (do
