@@ -20,9 +20,20 @@
 
 
 ;Have to add functionality:
-  ; add function to for dice 7
+  ; add function to for dice 7 (put picture on number and block that number) (function block number should be added,
+  ; maybe through some state in *state)
+  ;
   ; add validation that you buy road if you not have settlement nears by
+  ; (maybe you can build-road only if in :settlement of :player, who is on turn, is spot which is on selected :road-coordinates)\
+  ;
   ; validation that you cannot buy settlement if you not have connection with road
+  ; (if is clicked :spot-coordinate in roads of :players)
+  ;
+  ; boocking of spots
+  ; (make in :spots when you make event spots click that spots get some atribute :book :true and if is true
+  ; you cannot click again and also book all settlement fared away by 1)
+  ;
+  ;
   ; calculatiuon in table of vp
   ; buy cards for 4 yours
   ; to can activate dev cards
