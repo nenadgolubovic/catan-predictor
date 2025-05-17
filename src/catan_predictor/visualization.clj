@@ -26,6 +26,9 @@
   ; calculatiuon in table of vp
   ; buy cards for 4 yours
   ; to can activate dev cards
+  ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
+  ; all have to be fitted in window
+  ; arrange project to look better
 
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
 (def points (spots/make-spots-from-centers centers))
@@ -735,7 +738,7 @@
       (let [coords (:spot-coordinates event)
             phase  (:phase @*state)
             areas (:areas @*state)
-            player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+            ]
         (cond
           (= phase "Initial")
           (do
@@ -753,7 +756,7 @@
             (swap! *state assoc :road-build true)
             (swap! *state assoc :initial-info "SECOND INITIAL PHASE, SELECT ROAD CONNECTED TO YOUR SETTLEMENT")
             (let [matched-areas (filter (fn [area] (some #{coords} (:spots area))) areas)
-                  all-resources (map :resource matched-areas)
+                  all-resources (remove #(= % "dust") (map :resource matched-areas))
                   player-turn (:player-turn @*state)
                   player-idx (dec player-turn)]
               (swap! *state assoc-in [:players player-idx :hand] all-resources))
