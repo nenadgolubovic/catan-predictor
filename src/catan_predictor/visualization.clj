@@ -20,17 +20,10 @@
 
 
 ;Have to add functionality:
-  ; add function to for dice 7 (put picture on number and block that number) (function block number should be added,
-  ; maybe through some state in *state)
-  ;
-  ; add validation that you buy road if you not have settlement nears by
-  ; (maybe you can build-road only if in :settlement of :player, who is on turn, is spot which is on selected :road-coordinates)\
 
-  ; boocking of spots
-  ; (make in :spots when you make event spots click that spots get some atribute :book :true and if is true
-  ; you cannot click again and also book all settlement fared away by 1)
   ;
   ; if something not build in intiial phase, do again
+  ; add 2 if town there
   ; calculatiuon in table of vp
   ; buy cards for 4 yours
   ; to can activate dev cards
@@ -74,7 +67,9 @@
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
                        :players []
                        :players-count 0
-                       :spots       (map #(create-spot-view (first %) (second %)) points)
+                       :spots (map #(create-spot-view (first %) (second %)) points)
+                       :booked-spots []
+                       :booked-roads []
                        :roads (map #(create-line-view (first (first %))
                                                       (second (first %))
                                                       (first (second %))
@@ -208,7 +203,7 @@
                               v))
                           players))))
 
-      (println "Updated player info:" (get (vec (:players @*state)) player-idx)))))
+      (println "Updated player info:" (get (vec (:players @*state)) player-idx) "boocked-spots" (@*state :booked-spots)))))
 (defn build-town
   [coords]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
@@ -687,13 +682,18 @@
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
 (defn filing-hand-with-resource [coordinates number]
-  "Players who have a settlement on the coordinates get the resources"
+  "Players who have a settlement or town on the coordinates get the resources.
+   Towns give double resources."
   (swap! *state update :players
          (fn [players]
            (mapv (fn [player]
-                   (if (some #{coordinates} (:settlement player))
+                   (cond
+                     (some #{coordinates} (:towns player))
+                     (update player :hand into (vec (concat (take-resources coordinates number)
+                                                            (take-resources coordinates number))))
+                     (some #{coordinates} (:settlement player))
                      (update player :hand into (vec (take-resources coordinates number)))
-                     player))
+                     :else player))
                  players))))
 (defn handle-numbers-click [number]
   (println "Clicked:" number))
@@ -760,73 +760,97 @@
                         (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                    dice-sum)))))
     :spots-click
-      (let [coords (:spot-coordinates event)
-            phase  (:phase @*state)
-            areas (:areas @*state)
-            ]
-        (cond
-          (= phase "Initial")
-          (do
-            (when (:settlement-build @*state)
-              (build-settlement coords))
-            (swap! *state assoc :settlement-build false)
-            (swap! *state assoc :road-build true)
-            (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL ROAD CONNECTED WITH YOUR SETTLEMENT"))
+    (let [coords (:spot-coordinates event)
+          booked-spots (:booked-spots @*state)
+          all-spots points
+          near-spots (filter #(= 1.0 (utils/distance-1-2 % coords)) all-spots)
+          phase (:phase @*state)
+          areas (:areas @*state)]
+      (println coords)
+      (if (and (not (:town-build @*state))
+               (some #(= % coords) booked-spots))
+        (swap! *state assoc :game-massage "THIS SPOTS ARE ALREADY BOOKED, OR IS TOO CLOSE TO OTHER SETTLEMENT")
 
-          (= phase "Second-Initial")
-          (do
-            (when (:settlement-build @*state)
-              (build-settlement coords))
-            (swap! *state assoc :settlement-build false)
-            (swap! *state assoc :road-build true)
-            (swap! *state assoc :initial-info "SECOND INITIAL PHASE, SELECT ROAD CONNECTED TO YOUR SETTLEMENT")
-            (let [matched-areas (filter (fn [area] (some #{coords} (:spots area))) areas)
-                  all-resources (remove #(= % "dust") (map :resource matched-areas))
-                  player-turn (:player-turn @*state)
-                  player-idx (dec player-turn)]
-              (swap! *state assoc-in [:players player-idx :hand] all-resources))
-            )
-        :else
         (do
           (cond
-            (:settlement-build @*state) (build-settlement coords)
-            (:town-build @*state)       (build-town coords)
-            :else                       (println "Nothing active to build"))
-          (swap! *state assoc :settlement-build false)
-          (swap! *state assoc :town-build false))))
+            (= phase "Initial")
+            (do
+              (when (:settlement-build @*state)
+                (build-settlement coords))
+              (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
+              (swap! *state assoc :settlement-build false)
+              (swap! *state assoc :road-build true)
+              (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL ROAD CONNECTED WITH YOUR SETTLEMENT"))
+
+            (= phase "Second-Initial")
+            (do
+              (when (:settlement-build @*state)
+                (build-settlement coords))
+              (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
+              (swap! *state assoc :settlement-build false)
+              (swap! *state assoc :road-build true)
+              (swap! *state assoc :initial-info "SECOND INITIAL PHASE, SELECT ROAD CONNECTED TO YOUR SETTLEMENT")
+              (let [matched-areas (filter (fn [area] (some #{coords} (:spots area))) areas)
+                    all-resources (remove #(= % "dust") (map :resource matched-areas))
+                    player-turn (:player-turn @*state)
+                    player-idx (dec player-turn)]
+                (swap! *state assoc-in [:players player-idx :hand] all-resources)))
+
+            :else
+            (do
+              (cond
+                (:settlement-build @*state)
+                (build-settlement coords)
+
+                (:town-build @*state)
+                (build-town coords)
+
+                :else
+                (println "Nothing active to build"))
+
+              (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
+              (println near-spots)
+              (swap! *state assoc :settlement-build false)
+              (swap! *state assoc :town-build false))))))
 
     :roads-click
     (let [road-coords (:road-coordinates event)
+          booked-roads (:booked-roads @*state)
           phase       (:phase @*state)
           road-active (:road-build @*state)
           player-turn (:player-turn @*state)
-          player-count (count (:players @*state))]
+          player-count (count (:players @*state))
+          booked-road? (some #(= % road-coords) booked-roads)]
       (if road-active
-        (do
-          (build-road road-coords)
-          (swap! *state assoc :road-build false)
+        (if booked-road?
+          (swap! *state assoc :game-massage "THIS ROAD IS ALREADY BUILT, CHOOSE ANOTHER")
+          (do
+            (build-road road-coords)
+            (swap! *state update :booked-roads conj road-coords)
+            (swap! *state assoc :road-build false)
 
-          (when (= phase "Initial")
-            (if (= player-turn player-count)
-              (do
-                (swap! *state assoc :phase "Second-Initial")
-                (swap! *state assoc :settlement-build true)
-                (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT"))
-              (do
-                (swap! *state assoc :settlement-build true)
-                (swap! *state update :player-turn #(player-turn-inc % player-count))
-                (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
-          (when (= phase "Second-Initial")
-            (swap! *state assoc :settlement-build true)
-            (when (= player-turn 1)
-              (swap! *state assoc :phase "Game")
-              (swap! *state assoc :initial-info "GAME")
-              (swap! *state assoc :settlement-build false)
-              (swap! *state assoc :fx/type game-view))
-            (when (not= player-turn 1)
-              (swap! *state update :player-turn #(player-turn-dec %))
-              (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
-        (println "No active to build road, press buy road button")))
+            (when (= phase "Initial")
+              (if (= player-turn player-count)
+                (do
+                  (swap! *state assoc :phase "Second-Initial")
+                  (swap! *state assoc :settlement-build true)
+                  (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT"))
+                (do
+                  (swap! *state assoc :settlement-build true)
+                  (swap! *state update :player-turn #(player-turn-inc % player-count))
+                  (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
+
+            (when (= phase "Second-Initial")
+              (swap! *state assoc :settlement-build true)
+              (when (= player-turn 1)
+                (swap! *state assoc :phase "Game")
+                (swap! *state assoc :initial-info "GAME")
+                (swap! *state assoc :settlement-build false)
+                (swap! *state assoc :fx/type game-view))
+              (when (not= player-turn 1)
+                (swap! *state update :player-turn #(player-turn-dec %))
+                (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))))
+      (println "No active to build road, press buy road button"))
 
     :circle-click
     (if (:move-thief @*state)
