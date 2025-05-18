@@ -30,7 +30,7 @@
   ; (make in :spots when you make event spots click that spots get some atribute :book :true and if is true
   ; you cannot click again and also book all settlement fared away by 1)
   ;
-  ;
+  ; if something not build in intiial phase, do again
   ; calculatiuon in table of vp
   ; buy cards for 4 yours
   ; to can activate dev cards
@@ -66,6 +66,9 @@
                        :town-build false
                        :settlement-build false
                        :road-build false
+                       :restricted-area nil
+                       :restricted-number nil
+                       :move-thief false
                        :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
@@ -91,9 +94,6 @@
                                           "monopoly" "monopoly"
                                           "year-of-plenty" "year-of-plenty"]
                        }))
-
-
-
 ;Start of game elements:
 (defn background-image []
   (Background.
@@ -158,8 +158,6 @@
                       :style "-fx-pref-width: 150px;"}
                      (remove-button idx)]})
        (:players @*state)))})
-
-
 (defn coords-in-roads?
   [coords player-name]
   (let [roads (:roads (first (filter #(= (:name %) player-name) (:players @*state))))]
@@ -276,11 +274,6 @@
                           players))))
 
       (println "Updated player info:" (get (vec (:players @*state)) player-idx)))))
-
-
-
-
-
 (defn color-dropdown []
   (let [all-colors ["red" "blue" "yellow" "green"]
         used-colors (set (map :color (:players @*state)))
@@ -290,8 +283,6 @@
      :value (:input-color @*state)
      :items (vec available-colors)
      :on-value-changed #(swap! *state assoc :input-color %) }))
-
-
 (def a
   (atom {:spots
          [{:fx/type :circle
@@ -317,7 +308,6 @@
            :fill "white"
            :on-mouse-clicked {:event/type :spots-click
                               :spot-coordinates [2.598 0.5]}}]}))
-
 (defn get-dice-image-url
   [dice-number]
   "get image depends on dice numer"
@@ -557,7 +547,6 @@
                 :text "Color"
                 :cell-value-factory :color
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}]}]})
-
 (defn shop []
   {:fx/type :stage
    :showing true
@@ -608,11 +597,6 @@
                                   :children [(image-group state)
                                              (roads-view)
                                              (spots-view)]}}}}))
-
-
-
-
-;state of game
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
@@ -660,7 +644,6 @@
                                            -fx-min-width: 400px;
                                            -fx-min-height: 100px;"
                                    :on-action {:event/type :initial-phase-game}}]}}})
-
 (defn initial-phase-game
   [state]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
@@ -695,7 +678,6 @@
                                     (roads-view)
                                     (spots-view)
                                     ]}}}))
-
 (defn take-resources [coords number]
   "function which from board when you pass coordinates of one spots and number and extract info of resources
   connected with that spot"
@@ -704,7 +686,6 @@
                  (some (fn [spot] (= coords spot)) (:spots area)))
                (filter #(= (str number) (:number %)) (:areas @*state))
                )))
-
 (defn filing-hand-with-resource [coordinates number]
   "Players who have a settlement on the coordinates get the resources"
   (swap! *state update :players
@@ -734,7 +715,6 @@
   "function that increments the player's ordinal number so that we know who has the move,
   if the last player plays then the next player with ordinal number 1"
    (dec number))
-
 (defn take-development-card []
   (let [player-idx (dec (:player-turn @*state))
         chosen (rand-nth (:development-deck @*state))]
@@ -742,8 +722,6 @@
     (swap! *state update-in [:players player-idx :dev-cards] #(conj % chosen))
     (swap! *state update-in [:players player-idx :hand] shop/buy-development-card)
     (println "Chosen card:" chosen)))
-
-
 
 (defn event-handler [event]
   (case (:event/type event)
@@ -772,10 +750,15 @@
     :start-game-view (swap! *state assoc :fx/type start-game-view)
     :dice-view  (do
                   (swap! *state assoc :dice-1 (utils/random-dice-number) :dice-2 (utils/random-dice-number))
-                  (doseq [coord (:spots @*state)]
-                    (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
-                                               (+ (:dice-1 @*state) (:dice-2 @*state))))
-                  )
+                  (let [dice-sum (+ (:dice-1 @*state) (:dice-2 @*state))]
+                    (if (= dice-sum 7)
+                     (do
+                       (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
+                       (swap! *state assoc :move-thief true)
+                       )
+                      (doseq [coord (:spots @*state)]
+                        (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
+                                                   dice-sum)))))
     :spots-click
       (let [coords (:spot-coordinates event)
             phase  (:phase @*state)
@@ -845,9 +828,34 @@
               (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
         (println "No active to build road, press buy road button")))
 
+    :circle-click
+    (if (:move-thief @*state)
+      (let [coords (:center-coordinates event)
+            areas (:areas @*state)
+            restricted-area (:restricted-area @*state)
+            restricted-number (:restricted-number @*state)
+            clicked-area (some #(when (= (:center %) coords) %) areas)
+            clicked-number (:number clicked-area)
+            areas-restored (if (and restricted-area (some? restricted-number))
+                             (mapv (fn [area]
+                                     (if (= (:center area) restricted-area)
+                                       (assoc area :number restricted-number)
+                                       area))
+                                   areas)
+                             areas)
+            areas-updated (mapv (fn [area]
+                                  (if (= (:center area) coords)
+                                    (assoc area :number nil)
+                                    area))
+                                areas-restored)]
+        (swap! *state assoc :areas areas-updated)
+        (swap! *state assoc :restricted-area coords)
+        (swap! *state assoc :restricted-number clicked-number)
+        (swap! *state assoc :move-thief false)
+        )
+      (swap! *state assoc :game-massage "YOU CAN'T MOVE THIEF IF YOU DIDN'T GET 7 ON DICE"))
 
 
-    :circle-click (handle-numbers-click (:center-coordinates event))
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
     :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
