@@ -21,13 +21,14 @@
 
 ;Have to add functionality:
 
-  ;
   ; if something not build in intiial phase, do again
-  ; add 2 if town there
   ; calculatiuon in table of vp
   ; buy cards for 4 yours
+
   ; to can activate dev cards
   ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
+  ; all messages shown in :game-message
+  ; all button to be hided if is not activate
   ; all have to be fitted in window
   ; arrange project to look better
 
@@ -62,6 +63,8 @@
                        :restricted-area nil
                        :restricted-number nil
                        :move-thief false
+                       :card-shop-buy false
+                       :card-card-sell false
                        :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
@@ -423,6 +426,13 @@
    :on-action {:event/type :buy-card-btn}
    }
   )
+(defn exit-shop-button
+  []
+  {:fx/type :button
+   :text      "Exit from shop"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :on-action {:event/type :exit-shop}
+   })
 (defn hexagon [x1 x2 image]
   (let [image-path (str "file:resources/static/area-" image ".jpg")
         image (Image. image-path)
@@ -470,6 +480,45 @@
    :stroke :gray
    :stroke-width 1
    }))
+(defn shop-buy-card []
+  {:fx/type :v-box
+   :spacing 10
+   :alignment :center
+   :children [{:fx/type :label
+               :text "PLEASE CHOOSE CARD WHICH YOU WANT TO BUY"
+               :style "-fx-background-color: white;
+                       -fx-background-radius: 5px;
+                       -fx-padding: 10px;
+                       -fx-font-size: 16px;
+                       -fx-font-weight: bold;
+                       "}
+              {:fx/type :h-box
+               :spacing 10
+               :children [(card "wood" "resource")
+                          (card "brick" "resource")
+                          (card "wool" "resource")
+                          (card "grain" "resource")
+                          (card "ore" "resource")]}]})
+(defn shop-sell-card []
+  {:fx/type :v-box
+   :spacing 10
+   :alignment :center
+   :children [{:fx/type :label
+               :text "PLEASE CHOOSE CARD WHICH YOU WANT TO SELL"
+               :style "-fx-background-color: white;
+                       -fx-background-radius: 5px;
+                       -fx-padding: 10px;
+                       -fx-font-size: 16px;
+                       -fx-font-weight: bold;
+                       "}
+              {:fx/type :h-box
+               :spacing 10
+               :children [(card "wood" "resource")
+                          (card "brick" "resource")
+                          (card "wool" "resource")
+                          (card "grain" "resource")
+                          (card "ore" "resource")]}]})
+
 (defn hand-view
   [cards]
   {:fx/type :h-box
@@ -577,21 +626,35 @@
                                  :spacing   10
                                  :padding   10
                                  :alignment :center
-                                 :children  [(table-info *state)
-                                             (dices-button)
-                                             (dice-views)
-                                             (buy-settlement-button)
-                                             (buy-town-button)
-                                             (buy-road-button)
-                                             (buy-dev-card-button)
-                                             (buy-card-button)
-                                             (hand-dev-view (:dev-cards player))
-                                             (end-turn-btn)]}
+                                 :children (remove nil?
+                                                   [(table-info *state)
+                                                    (dices-button)
+                                                    (dice-views)
+                                                    (buy-settlement-button)
+                                                    (buy-town-button)
+                                                    (buy-road-button)
+                                                    (buy-dev-card-button)
+                                                    (buy-card-button)
+                                                    (cond
+                                                      (:card-shop-buy @*state)  {:fx/type :v-box
+                                                                                 :spacing 8
+                                                                                 :alignment :center
+                                                                                 :children [(shop-buy-card)
+                                                                                            (exit-shop-button)]}
+                                                      (:card-card-sell @*state) {:fx/type :v-box
+                                                                                 :spacing 8
+                                                                                 :alignment :center
+                                                                                 :children [(shop-sell-card)
+                                                                                            (exit-shop-button)]}
+                                                      :else                     nil)
+                                                    (hand-dev-view (:dev-cards player))
+                                                    (end-turn-btn)])}
                          :bottom (hand-view (:hand player))
                          :center {:fx/type :stack-pane
                                   :children [(image-group state)
                                              (roads-view)
-                                             (spots-view)]}}}}))
+                                             (spots-view)
+                                             ]}}}}))
 (defn start-game-view [state]
   {:fx/type :stage
    :showing true
@@ -896,7 +959,10 @@
                     (swap! *state assoc :road-build true)
                     (swap! *state assoc :town-build false)
                     (swap! *state assoc :settlement-build false))
-    :buy-card-btn
+    :buy-card-btn (do
+                    (swap! *state assoc :card-shop-buy true))
+    :exit-shop ((swap! *state assoc :card-shop-buy false)
+                (swap! *state assoc :card-shop-sell false))
     nil))
 (def renderer
   (fx/create-renderer
