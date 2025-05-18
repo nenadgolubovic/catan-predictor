@@ -25,10 +25,7 @@
   ;
   ; add validation that you buy road if you not have settlement nears by
   ; (maybe you can build-road only if in :settlement of :player, who is on turn, is spot which is on selected :road-coordinates)\
-  ;
-  ; validation that you cannot buy settlement if you not have connection with road
-  ; (if is clicked :spot-coordinate in roads of :players)
-  ;
+
   ; boocking of spots
   ; (make in :spots when you make event spots click that spots get some atribute :book :true and if is true
   ; you cannot click again and also book all settlement fared away by 1)
@@ -69,6 +66,7 @@
                        :town-build false
                        :settlement-build false
                        :road-build false
+                       :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
                        :players []
@@ -162,36 +160,57 @@
        (:players @*state)))})
 
 
-
-
+(defn coords-in-roads?
+  [coords player-name]
+  (let [roads (:roads (first (filter #(= (:name %) player-name) (:players @*state))))]
+    (some (fn [[a b]]
+            (or (= coords a) (= coords b)))
+          roads)))
+(defn coords-in-settlement-or-roads?
+  [coords player-name]
+  (let [player (first (filter #(= (:name %) player-name) (:players @*state)))
+        settlement (:settlement player)
+        roads (:roads player)]
+    (some (fn [point]
+            (or (some #(= point %) settlement)
+                (some (fn [[a b]] (or (= point a) (= point b)))  roads)))
+      coords)))
+(defn coords-in-last-settlement?
+  [coords player-name]
+  (let [player (first (filter #(= (:name %) player-name) (:players @*state)))
+        last-settlement (last (:settlement player))]
+    (some #(= % last-settlement) coords)))
 (defn build-settlement
   [coords]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
-        player-idx (dec (:player-turn @*state))]
+        player-idx (dec (:player-turn @*state))
+        game-phase (= "Game" (:phase @*state))]
 
-    (try
-      (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
-      (catch Exception e
-        (println "No resource")))
+    (when (or (not game-phase)
+              (coords-in-roads? coords (:name player)))
+      (try
+        (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
+        (catch Exception e
+          (println "No resource")))
 
-    (swap! *state update :spots
-           (fn [spots]
-             (mapv (fn [spot]
-                     (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
-                       (assoc spot :fill (:color player))
-                       spot))
-                   spots)))
+      (swap! *state update :spots
+             (fn [spots]
+               (mapv (fn [spot]
+                       (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
+                         (assoc spot :fill (:color player))
+                         spot))
+                     spots)))
 
-    (swap! *state update :players
-           (fn [players]
-             (into []
-                   (map (fn [v]
-                          (if (= (:name v) (:name player))
-                            (update v :settlement (fnil conj []) coords)
-                            v))
-                        players))))
-    (println "Updated player info:" (get (vec (:players @*state)) player-idx))
-    ))
+      (swap! *state update :players
+             (fn [players]
+               (into []
+                     (map (fn [v]
+                            (if (= (:name v) (:name player))
+                              (update v :settlement (fnil conj []) coords)
+                              v))
+                          players))))
+
+      (println "Updated player info:" (get (vec (:players @*state)) player-idx)))))
 (defn build-town
   [coords]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
@@ -228,29 +247,38 @@
 
 
   ))
-
-
 (defn build-road
   [coords]
-  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
+  (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
+        player-idx (dec (:player-turn @*state))
+        game-phase (= "Game" (:phase @*state))]
 
-    (swap! *state update :roads
-           (fn [roads]
-             (mapv (fn [road]
-                     (if (= (:road-coordinates (:on-mouse-clicked road)) coords)
-                       (assoc road :stroke (:color player))
-                       road))
-                   roads)))
+    (when (or (and game-phase
+                   (coords-in-settlement-or-roads? coords (:name player)))
+              (and (not game-phase)
+                   (coords-in-last-settlement? coords (:name player))))
 
-    (swap! *state update :players
-           (fn [players]
-             (into []
-                   (map (fn [v]
-                          (if (= (:name v) (:name player))
-                            (update v :roads (fnil conj []) coords)
-                            v))
-                        players)))))
-  )
+      (swap! *state update :roads
+             (fn [roads]
+               (mapv (fn [road]
+                       (if (= (:road-coordinates (:on-mouse-clicked road)) coords)
+                         (assoc road :stroke (:color player))
+                         road))
+                     roads)))
+
+      (swap! *state update :players
+             (fn [players]
+               (into []
+                     (map (fn [v]
+                            (if (= (:name v) (:name player))
+                              (update v :roads (fnil conj []) coords)
+                              v))
+                          players))))
+
+      (println "Updated player info:" (get (vec (:players @*state)) player-idx)))))
+
+
+
 
 
 (defn color-dropdown []
@@ -550,7 +578,10 @@
                          :top {:fx/type   :v-box
                                :alignment :center
                                :padding   10
-                               :children  [(player-turn-info (:name player))]}
+                               :children  [(player-turn-info (:name player))
+                                           {:fx/type :label
+                                            :style "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"
+                                            :text (:game-massage @*state)}]}
                          :left {:fx/type   :v-box
                                 :padding   10
                                 :alignment :top-left
