@@ -7,6 +7,7 @@
             [catan-predictor.area :as area]
             [catan-predictor.centers :as centers]
             [catan-predictor.player :as player]
+            [catan-predictor.shop :as shop]
             [catan-predictor.deck :as deck]
             [cljfx.fx :as fx-elem]
             )
@@ -21,10 +22,8 @@
 
 ;Have to add functionality:
 
-  ; if something not build in intiial phase, do again
-  ; calculatiuon in table of vp
-  ; buy cards for 4 yours
-
+  ;calculate longest route
+  ; calculate bigest army
   ; to can activate dev cards
   ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
   ; all messages shown in :game-message
@@ -62,6 +61,9 @@
                        :road-build false
                        :restricted-area nil
                        :restricted-number nil
+                       :clicked-resource nil
+                       :buy-resource nil
+                       :sell-resource nil
                        :move-thief false
                        :card-shop-buy false
                        :card-card-sell false
@@ -470,15 +472,23 @@
   [resource type]
   (let [image-path (str "file:resources/static/"type"-" resource ".jpg")
         image (Image. image-path)
-        pattern (ImagePattern. image)]
-  {:fx/type :rectangle
-   :width 160
-   :height 230
-   :arc-height 20
-   :arc-width 20
-   :fill pattern
-   :stroke :gray
-   :stroke-width 1
+        pattern (ImagePattern. image)
+        selected-resource (:clicked-resource @*state)
+        width (if (= resource selected-resource) 200 160)
+        height (if (= resource selected-resource) 287 230)
+        arc-height (if (= resource selected-resource) 30 20)
+        arc-width (if (= resource selected-resource) 30 20)]
+
+      {:fx/type :rectangle
+       :width width
+       :height height
+       :arc-height arc-height
+       :arc-width arc-width
+       :fill pattern
+       :stroke :gray
+       :stroke-width 1
+       :on-mouse-clicked {:event/type :card-click
+                   :resource resource}
    }))
 (defn shop-buy-card []
   {:fx/type :v-box
@@ -518,7 +528,18 @@
                           (card "wool" "resource")
                           (card "grain" "resource")
                           (card "ore" "resource")]}]})
-
+(defn buy-this-card-btn
+  []
+  {:fx/type :button
+   :text      "Buy this card"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :on-action {:event/type :buy-this-card}})
+(defn sell-this-card-btn
+  []
+  {:fx/type :button
+   :text      "Sell this card"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+  :on-action {:event/type :sell-this-card}})
 (defn hand-view
   [cards]
   {:fx/type :h-box
@@ -551,8 +572,9 @@
    :v-box/margin 50
    :on-action {:event/type :end-turn}
    })
+
 (defn table-info
-  [state]
+  []
   {:fx/type :v-box
    :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
    :children
@@ -566,18 +588,18 @@
              -fx-selection-bar-non-focused: #99ccff;"
      :items (vec (map (fn [player]
                         {:player (:name player)
-                         :victory-points (or (:victory-points player) 0)
+                         :vp (or (:vp player) 0)
                          :road-length (or (:road-length player) 0)
                          :army-size (or (:knight-length player) 0)
                          :color (:color player)})
-                      (:players @state)))
+                      (:players @*state)))
      :columns [{:fx/type :table-column
                 :text "Player"
                 :cell-value-factory :player
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Victory Points"
-                :cell-value-factory :victory-points
+                :cell-value-factory :vp
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Road Length"
@@ -591,14 +613,7 @@
                 :text "Color"
                 :cell-value-factory :color
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}]}]})
-(defn shop []
-  {:fx/type :stage
-   :showing true
-   :title "Shop"
-   :width 1000
-   :height 500
-   }
-  )
+
 (defn game-view
   [state]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))]
@@ -627,7 +642,7 @@
                                  :padding   10
                                  :alignment :center
                                  :children (remove nil?
-                                                   [(table-info *state)
+                                                   [(table-info)
                                                     (dices-button)
                                                     (dice-views)
                                                     (buy-settlement-button)
@@ -640,11 +655,13 @@
                                                                                  :spacing 8
                                                                                  :alignment :center
                                                                                  :children [(shop-buy-card)
+                                                                                            (buy-this-card-btn)
                                                                                             (exit-shop-button)]}
-                                                      (:card-card-sell @*state) {:fx/type :v-box
+                                                      (:card-shop-sell @*state) {:fx/type :v-box
                                                                                  :spacing 8
                                                                                  :alignment :center
                                                                                  :children [(shop-sell-card)
+                                                                                            (sell-this-card-btn)
                                                                                             (exit-shop-button)]}
                                                       :else                     nil)
                                                     (hand-dev-view (:dev-cards player))
@@ -718,7 +735,10 @@
                                      :children  [{:fx/type :label
                                                   :text    (:initial-info @*state)
                                                   :style   "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"}
-                                                 (player-turn-info (:name player))]}
+                                                 (player-turn-info (:name player))
+                                                 {:fx/type :label
+                                                  :text    (:game-massage @*state)
+                                                  :style   "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"}]}
                                     {:fx/type   :h-box
                                      :alignment :top-left
                                      :padding   10
@@ -729,7 +749,7 @@
                                      :alignment :center-right
                                      :children  [{:fx/type   :v-box
                                                   :alignment :center
-                                                  :children  [(table-info *state)
+                                                  :children  [(table-info)
                                                               (end-turn-btn)]}]}
                                     (hand-view (:hand player))
                                     (image-group state)
@@ -786,7 +806,26 @@
     (swap! *state update-in [:players player-idx :hand] shop/buy-development-card)
     (println "Chosen card:" chosen)))
 
+(defn update-players-vp []
+  (swap! *state update :players
+         (fn [players]
+           (vec
+             (map-indexed
+               (fn [idx player]
+                 (let [count-settlement (count (:settlement player))
+                       count-towns (* 2 (count (:towns player)))
+                       vp-cards (count (filter #(= % "victory-point") (:dev-cards player)))
+                       longest-route (if (:longest-route player) 2 0)
+                       biggest-army (if (:biggest-army player) 2 0)
+                       total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
+                   (assoc player :vp total-vp)))
+               players)))))
+
+
+
+
 (defn event-handler [event]
+
   (case (:event/type event)
     :add (do
            (swap! *state
@@ -829,10 +868,9 @@
           near-spots (filter #(= 1.0 (utils/distance-1-2 % coords)) all-spots)
           phase (:phase @*state)
           areas (:areas @*state)]
-      (println coords)
       (if (and (not (:town-build @*state))
                (some #(= % coords) booked-spots))
-        (swap! *state assoc :game-massage "THIS SPOTS ARE ALREADY BOOKED, OR IS TOO CLOSE TO OTHER SETTLEMENT")
+        (swap! *state assoc :game-massage "THIS SPOTS ARE ALREADY BOOKED, TOO CLOSE TO OTHER SETTLEMENT, OR NOT CONNECTED")
 
         (do
           (cond
@@ -843,7 +881,9 @@
               (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
               (swap! *state assoc :settlement-build false)
               (swap! *state assoc :road-build true)
-              (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL ROAD CONNECTED WITH YOUR SETTLEMENT"))
+              (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL ROAD CONNECTED WITH YOUR SETTLEMENT")
+              (update-players-vp)
+              )
 
             (= phase "Second-Initial")
             (do
@@ -853,11 +893,14 @@
               (swap! *state assoc :settlement-build false)
               (swap! *state assoc :road-build true)
               (swap! *state assoc :initial-info "SECOND INITIAL PHASE, SELECT ROAD CONNECTED TO YOUR SETTLEMENT")
+              (update-players-vp)
               (let [matched-areas (filter (fn [area] (some #{coords} (:spots area))) areas)
                     all-resources (remove #(= % "dust") (map :resource matched-areas))
                     player-turn (:player-turn @*state)
                     player-idx (dec player-turn)]
-                (swap! *state assoc-in [:players player-idx :hand] all-resources)))
+                (swap! *state assoc-in [:players player-idx :hand] all-resources))
+
+              )
 
             :else
             (do
@@ -874,7 +917,9 @@
               (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
               (println near-spots)
               (swap! *state assoc :settlement-build false)
-              (swap! *state assoc :town-build false))))))
+              (swap! *state assoc :town-build false)
+              (update-players-vp)
+              )))))
 
     :roads-click
     (let [road-coords (:road-coordinates event)
@@ -909,7 +954,8 @@
                 (swap! *state assoc :phase "Game")
                 (swap! *state assoc :initial-info "GAME")
                 (swap! *state assoc :settlement-build false)
-                (swap! *state assoc :fx/type game-view))
+                (swap! *state assoc :fx/type game-view)
+                (update-players-vp))
               (when (not= player-turn 1)
                 (swap! *state update :player-turn #(player-turn-dec %))
                 (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))))
@@ -945,7 +991,9 @@
 
     :set-input-name (swap! *state assoc :input-name (:fx/event event))
     :set-input-color (swap! *state assoc :input-color (:fx/event event))
-    :end-turn (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
+    :end-turn (do
+                (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
+                (swap! *state assoc :clicked-resource nil))
     :buy-dev-card-btn (take-development-card)
     :buy-settlement-btn (do
                           (swap! *state assoc :settlement-build true)
@@ -960,10 +1008,49 @@
                     (swap! *state assoc :town-build false)
                     (swap! *state assoc :settlement-build false))
     :buy-card-btn (do
-                    (swap! *state assoc :card-shop-buy true))
+                    (swap! *state assoc :card-shop-buy true)
+                    (swap! *state assoc :clicked-resource nil))
     :exit-shop ((swap! *state assoc :card-shop-buy false)
                 (swap! *state assoc :card-shop-sell false))
-    nil))
+    :card-click (swap! *state assoc :clicked-resource (:resource event))
+    :buy-this-card (do (swap! *state assoc :card-shop-buy false)
+                       (swap! *state assoc :card-shop-sell true)
+                       (swap! *state assoc :buy-resource (:clicked-resource @*state))
+                       (swap! *state assoc :clicked-resource nil)
+                       )
+    :sell-this-card (do
+                      (swap! *state assoc :card-shop-sell false)
+                      (swap! *state assoc :sell-resource (:clicked-resource @*state))
+                        (let [player-idx (dec (:player-turn @*state))
+                              hand-path [:players player-idx :hand]
+                              current-hand (get-in @*state hand-path)
+                              sell-resource (:sell-resource @*state)
+                              buy-card-type (:buy-resource @*state)
+                              sell-count (count (filter #(= % sell-resource) current-hand))]
+
+                          (if (< sell-count 4)
+                            (swap! *state assoc :game-massage "NO CARD BOUGHT BECAUSE YOU DONT HAVE ENOUGH RESOURCE TO BUY")
+
+                            (let [new-hand (let [[b1 a1] (split-with #(not= % sell-resource) current-hand)
+                                                 hand1 (concat b1 (if (empty? a1) [] (rest a1)))
+
+                                                 [b2 a2] (split-with #(not= % sell-resource) hand1)
+                                                 hand2 (concat b2 (if (empty? a2) [] (rest a2)))
+
+                                                 [b3 a3] (split-with #(not= % sell-resource) hand2)
+                                                 hand3 (concat b3 (if (empty? a3) [] (rest a3)))
+
+                                                 [b4 a4] (split-with #(not= % sell-resource) hand3)
+                                                 hand4 (concat b4 (if (empty? a4) [] (rest a4)))]
+                                             hand4)
+                                  updated-hand (remove nil? (conj new-hand buy-card-type))]
+                              (swap! *state assoc-in hand-path updated-hand)
+                              (swap! *state dissoc :game-message))))
+
+                      (swap! *state assoc :clicked-resource nil))
+    )
+  )
+
 (def renderer
   (fx/create-renderer
     :opts {:fx.opt/map-event-handler event-handler}))

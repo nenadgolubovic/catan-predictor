@@ -26,12 +26,14 @@
   (into hand card-type))
 
 (defn exchange-cards
-  [hand sell-card-type buy-card-type n]
-  "Select type which want to buy and which want to sell"
-  (swap! hand update :cards
-         #(remove-n-cards sell-card-type % n))
-  (swap! hand update :cards
-         #(add-cards [buy-card-type] %)))
+  [state player-idx sell-card-type n buy-card-type]
+  (swap! state
+         update-in
+         [:players player-idx :hand :cards]
+         (fn [cards]
+           (-> cards
+               (remove-n-cards sell-card-type n)
+               (add-cards buy-card-type )))))
 
 (def resources #{"wool" "brick" "wood" "ore" "grain"})
 (defn buy-settlement
