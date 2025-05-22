@@ -10,6 +10,7 @@
             [catan-predictor.shop :as shop]
             [catan-predictor.deck :as deck]
             [cljfx.fx :as fx-elem]
+            [clojure.string :as str]
             )
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
@@ -23,14 +24,66 @@
 
 ;Have to add functionality:
 
-;calculate longest route
+
+
+(defn add-edge
+  [graph node neighbor]
+  (update graph node (fnil conj []) neighbor))
+
+(defn build-graph
+  [edges]
+  (reduce (fn [g [a b]]
+            (-> g
+                (add-edge a b)
+                (add-edge b a)))
+          {}
+          edges))
+
+(defn find-all-paths
+  [graph start end & [path]]
+  (let [path (conj (or path []) start)]
+    (if (= start end)
+      [path]
+      (when-let [neighbors (graph start)]
+        (apply concat
+               (for [node neighbors
+                     :when (not (some #(= % node) path))]
+                 (find-all-paths graph node end path)))))))
+
+(defn longest-path
+  [paths]
+  (reduce
+    (fn [longest path]
+      (if (> (count path) (count longest))
+        path
+        longest))
+    []
+    paths))
+
+(defn longest-route-length
+  [roads]
+  (let [graph (build-graph roads)
+        nodes (keys graph)
+        all-paths (for [start nodes
+                        end nodes
+                        :when (not= start end)]
+                    (find-all-paths graph start end))
+        flat-paths (apply concat all-paths)
+        longest (longest-path flat-paths)]
+    (max 0 (dec (count longest)))))
+
+
+
 ; calculate bigest army
+; put who is best longest
 ; to can activate dev cards - just make klcik, fucntion made
 ; (thief same as 7
 ; vp nothing
 ; resource - buy card only 2 times
 ; build road 2 times
+; have to make monopoly
 ; )
+; Make won message
 ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
 ;just dice one time
 
@@ -73,6 +126,7 @@
                        :dice-activate true
                        :card-card-sell false
                        :take-resource-card? false
+                       :winner-longest-route nil
                        :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
@@ -437,6 +491,13 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :on-action {:event/type :exit-shop}
    })
+(defn activate-button
+  []
+  {:fx/type :button
+   :text      "Activate"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :on-action {:event/type :activate-dev-card}
+   })
 (defn hexagon [x1 x2 image]
   (let [image-path (str "file:resources/static/area-" image ".jpg")
         image (Image. image-path)
@@ -574,7 +635,6 @@
    :v-box/margin 10
    :on-action {:event/type :end-turn}
    })
-
 (defn table-info
   []
   {:fx/type :v-box
@@ -617,7 +677,6 @@
                 :text "Color"
                 :cell-value-factory :color
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}]}]})
-
 (defn game-view
   [state]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
@@ -678,6 +737,7 @@
                                                                                                       (exit-shop-button)]}
                                                                 :else                     nil)
                                                               (hand-dev-view (:dev-cards player))
+                                                              (activate-button)
                                                               (end-turn-btn)])}}
                          :bottom (hand-view (:hand player))
                          :center {:fx/type :anchor-pane
@@ -689,7 +749,6 @@
                                               :children [(image-group state)
                                                          (roads-view)
                                                          (spots-view)]}]}}}}))
-
 (defn start-game-view [state]
   (let [screen-bounds (.getVisualBounds (Screen/getPrimary))
   width (.getWidth screen-bounds)
@@ -781,7 +840,7 @@
                                      :children  [{:fx/type   :v-box
                                                   :alignment :center
                                                   :children  [(table-info)
-                                                              (end-turn-btn)]}]}
+                                                              ]}]}
                                     (hand-view (:hand player))
                                     (image-group state)
                                     (roads-view)
@@ -840,24 +899,60 @@
 (defn update-players-vp []
   (swap! *state update :players
          (fn [players]
+           (let [winner-longest-route (:winner-longest-route @*state)]
            (vec
              (map-indexed
                (fn [idx player]
                  (let [count-settlement (count (:settlement player))
                        count-towns (* 2 (count (:towns player)))
                        vp-cards (count (filter #(= % "victory-point") (:dev-cards player)))
-                       longest-route (if (:longest-route player) 2 0)
+                       longest-route (if (= (:name player) winner-longest-route) 2 0)
                        biggest-army (if (:biggest-army player) 2 0)
                        total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
                    (assoc player :vp total-vp)))
-               players)))))
+               players))))))
 
+(defn update-current-player-road-length! []
+  (let [player-idx (dec (:player-turn @*state))
+        path [:players player-idx :road-length]]
+    (swap! *state assoc-in path
+           (longest-route-length (get-in @*state [:players player-idx :roads])))
+    )
+  )
+
+(defn player-with-longest-route []
+  (let [players (:players @*state)
+        current-winner-name (:winner-longest-route @*state)
+        current-winner (some #(when (= (:name %) current-winner-name) %) players)
+        current-winner-length (or (:road-length current-winner) 0)
+        max-player (apply max-key #(or (:road-length %) 0) players)
+        max-length (or (:road-length max-player) 0)]
+    (when (>= max-length 3)
+      (when (> max-length current-winner-length)
+        (swap! *state assoc :winner-longest-route (:name max-player))
+        ))))
 
 
 
 (defn event-handler [event]
 
   (case (:event/type event)
+    :activate-dev-card ((when (= :card-click "knight")
+                          (do
+                            (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
+                            (swap! *state assoc :move-thief true))
+                          )
+                          (when (= :card-click "road-building"))
+                          (do (swap! *state assoc :road-build true)
+                              (swap! *state assoc :game-massage "YOU ACTIVATED CARD FOR BUILDING 2 ROAD, PLEASE SELECT 2"))
+                          (when (= :card-click "year-of-plenty")
+                            (do (swap! *state assoc :card-shop-buy true)
+                                (swap! *state assoc :take-resource-card? true)))
+                          (when (= :card-click "monopoly"))
+                          (swap! *state assoc :card-click nil)
+                          )
+
+
     :add (do
            (swap! *state
                   (fn [s]
@@ -894,9 +989,6 @@
                         (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                    dice-sum))))
                   (swap! *state assoc :dice-activate false)))
-    :knight-card (do
-                   (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
-                   (swap! *state assoc :move-thief true))
     :spots-click
     (let [coords (:spot-coordinates event)
           booked-spots (:booked-spots @*state)
@@ -951,15 +1043,11 @@
                 (println "Nothing active to build"))
 
               (swap! *state update :booked-spots #(vec (set (concat % [coords] near-spots))))
-              (println near-spots)
               (swap! *state assoc :settlement-build false)
               (swap! *state assoc :town-build false)
               (update-players-vp)
-              )))))
-    :road-building-card (do (swap! *state assoc :road-build true)
-                           (swap! *state assoc :game-massage "YOU ACTIVATED CARD FOR BUILDING 2 ROAD, PLEASE SELECT 2"))
-    :take-resource-card (do (swap! *state assoc :card-shop-buy true)
-                            (swap! *state assoc :take-resource-card? true))
+              ))))
+      )
     :roads-click
     (let [road-coords (:road-coordinates event)
           booked-roads (:booked-roads @*state)
@@ -977,21 +1065,33 @@
               (do (build-road road-coords)
                   (swap! *state assoc :build-roads-activate false)
                   (swap! *state update :booked-roads conj road-coords)
-                  (swap! *state assoc :road-build false))
+                  (swap! *state assoc :road-build false)
+                  (update-current-player-road-length!)
+                  (player-with-longest-route)
+                  (update-players-vp))
               (do (build-road road-coords)
                   (swap! *state update :booked-roads conj road-coords)
-                  (swap! *state assoc :road-build false)))
+                  (swap! *state assoc :road-build false)
+                  (update-current-player-road-length!)
+                  (player-with-longest-route)
+                  (update-players-vp)))
 
             (when (= phase "Initial")
               (if (= player-turn player-count)
                 (do
                   (swap! *state assoc :phase "Second-Initial")
                   (swap! *state assoc :settlement-build true)
-                  (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT"))
+                  (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT")
+                  (update-current-player-road-length!)
+                  (player-with-longest-route)
+                  (update-players-vp))
                 (do
                   (swap! *state assoc :settlement-build true)
                   (swap! *state update :player-turn #(player-turn-inc % player-count))
-                  (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))
+                  (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS")
+                  (update-current-player-road-length!)
+                  (player-with-longest-route)
+                  (update-players-vp))))
 
             (when (= phase "Second-Initial")
               (swap! *state assoc :settlement-build true)
@@ -1000,11 +1100,19 @@
                 (swap! *state assoc :initial-info "GAME")
                 (swap! *state assoc :settlement-build false)
                 (swap! *state assoc :fx/type game-view)
+                (update-current-player-road-length!)
+                (player-with-longest-route)
                 (update-players-vp))
               (when (not= player-turn 1)
                 (swap! *state update :player-turn #(player-turn-dec %))
-                (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"))))))
-      (println "No active to build road, press buy road button"))
+                (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS")
+                (update-current-player-road-length!)
+                (player-with-longest-route)
+                (update-players-vp))))))
+      (println "No active to build road, press buy road button")
+      (update-current-player-road-length!)
+      (player-with-longest-route)
+      (update-players-vp))
 
     :circle-click
     (if (:move-thief @*state)
