@@ -8,26 +8,13 @@
             [catan-predictor.centers :as centers]
             [catan-predictor.player :as player]
             [catan-predictor.shop :as shop]
-            [catan-predictor.deck :as deck]
-            [cljfx.fx :as fx-elem]
-            [clojure.string :as str]
             )
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
            [javafx.scene.image Image]
-           [javafx.scene.shape Polygon]
            [javafx.scene.paint Color]
            [javafx.scene.paint ImagePattern]
            [javafx.scene.image Image]
-           [javafx.geometry Rectangle2D]
            [javafx.stage Screen]))
-
-;Have to add functionality:
-;
-; resource - buy card only 2 times
-; have to make monopoly
-; )
-; Make won message
-; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
 
 
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
@@ -62,15 +49,19 @@
                        :restricted-number nil
                        :clicked-resource nil
                        :buy-resource nil
+                       :on-dice-7 false
                        :sell-resource nil
                        :move-thief false
                        :card-shop-buy false
                        :dice-activate true
+                       :dice-rolled false
                        :card-card-sell false
                        :take-resource-card? false
                        :winner-longest-route nil
+                       :shop-view false
                        :winner-army-size nil
                        :activated-road-building false
+                       :winner nil
                        :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
@@ -83,7 +74,10 @@
                                                       (second (first %))
                                                       (first (second %))
                                                       (second (second %))) r)
-                       :areas (vec (area/create-areas-from-centers points centers
+                       :areas (vec (area/create-areas-from-centers
+                                     points
+
+                                                                   centers
                                                                    (atom ["wool" "wool" "wool" "wool"
                                                                           "brick" "brick" "brick"
                                                                           "wood" "wood" "wood" "wood"
@@ -95,8 +89,7 @@
                        :development-deck ["knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight" "knight"
                                           "victory-point" "victory-point" "victory-point" "victory-point" "victory-point"
                                           "road-building" "road-building"
-                                          "monopoly" "monopoly"
-                                          "year-of-plenty" "year-of-plenty"]
+                                          ]
                        }))
 ;Start of game elements:
 (defn background-image []
@@ -193,7 +186,7 @@
       (try
         (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
         (catch Exception e
-          (println "No resource")))
+          (swap! *state assoc :game-massage e)))
 
       (swap! *state update :spots
              (fn [spots]
@@ -212,7 +205,7 @@
                               v))
                           players))))
 
-      (println "Updated player info:" (get (vec (:players @*state)) player-idx) "boocked-spots" (@*state :booked-spots)))))
+      (swap! *state assoc :game-massage "Successful build settlement" ))))
 (defn build-town
   [coords]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
@@ -259,6 +252,11 @@
                    (coords-in-settlement-or-roads? coords (:name player)))
               (and (not game-phase)
                    (coords-in-last-settlement? coords (:name player))))
+      (when game-phase
+        (try
+          (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
+          (catch Exception e
+            (swap! *state assoc :game-massage e))))
 
       (swap! *state update :roads
              (fn [roads]
@@ -276,8 +274,7 @@
                               (update v :roads (fnil conj []) coords)
                               v))
                           players))))
-
-      (println "Updated player info:" (get (vec (:players @*state)) player-idx)))))
+      )))
 (defn color-dropdown []
   (let [all-colors ["red" "blue" "yellow" "green"]
         used-colors (set (map :color (:players @*state)))
@@ -620,9 +617,28 @@
 (defn game-view
   [state]
   (let [player (get (vec (:players @*state)) (dec (:player-turn @*state)))
+        hand (:hand player)
+        dev (:dev-cards player)
         screen-bounds (.getVisualBounds (Screen/getPrimary))
         width (.getWidth screen-bounds)
-        height (.getHeight screen-bounds)]
+        height (.getHeight screen-bounds)
+        ore-count (count (filter #(= % "ore") hand))
+        grain-count (count (filter #(= % "grain") hand))
+        wood-count (count (filter #(= % "wood") hand))
+        wool-count (count (filter #(= % "wool") hand))
+        brick-count (count (filter #(= % "brick") hand))
+        show-buy-town? (and (>= ore-count 3) (>= grain-count 2))
+        show-buy-settlement? (and (>= wool-count 1) (>= grain-count 1) (>= wood-count 1) (>= brick-count 1))
+        show-buy-dev? (and (>= wool-count 1) (>= grain-count 1) (>= ore-count 1))
+        show-buy-road? (and (>= brick-count 1) (>= wood-count 1))
+        show-dev-cards? (some? dev)
+        card-freq (frequencies hand)
+        dev-cards-clicked? (contains? #{"knight" "road-building"} (:clicked-resource @*state))
+        has-four-of-a-kind? (some (fn [[_ cnt]] (>= cnt 4)) card-freq)
+        dice-rolled? (:dice-rolled @*state)
+        on-dice-7? (:on-dice-7 @*state)
+        shop-view? (:shop-view @*state)
+        ]
     {:fx/type :stage
      :width width
      :height height
@@ -653,42 +669,52 @@
                                  :content {:fx/type   :v-box
                                            :spacing   10
                                            :alignment :center
-                                           :children (remove nil?
+                                           :children (when (not on-dice-7?) (remove nil?
                                                              [(table-info)
-                                                              (dices-button)
-                                                              (dice-views)
-                                                              (buy-settlement-button)
-                                                              (buy-town-button)
-                                                              (buy-road-button)
-                                                              (buy-dev-card-button)
-                                                              (buy-card-button)
-                                                              (cond
-                                                                (:card-shop-buy @*state)  {:fx/type :v-box
-                                                                                           :spacing 8
-                                                                                           :alignment :center
-                                                                                           :children [(shop-buy-card)
-                                                                                                      (buy-this-card-btn)
-                                                                                                      (exit-shop-button)]}
-                                                                (:card-shop-sell @*state) {:fx/type :v-box
-                                                                                           :spacing 8
-                                                                                           :alignment :center
-                                                                                           :children [(shop-sell-card)
-                                                                                                      (sell-this-card-btn)
-                                                                                                      (exit-shop-button)]}
-                                                                :else                     nil)
-                                                              (hand-dev-view (:dev-cards player))
-                                                              (activate-button)
-                                                              (end-turn-btn)])}}
+                                                              (when (not shop-view?)(when (not dice-rolled?)(dices-button)))
+                                                              (when (not shop-view?)(when dice-rolled? (dice-views)))
+                                                              (when (not shop-view?)(when dice-rolled? (when show-buy-settlement? (buy-settlement-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (when show-buy-town? (buy-town-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (when show-buy-road? (buy-road-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (when show-buy-dev? (buy-dev-card-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (when has-four-of-a-kind? (buy-card-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (when show-dev-cards? (hand-dev-view (:dev-cards player)))))
+                                                              (when (not shop-view?)(when dice-rolled? (when dev-cards-clicked? (activate-button))))
+                                                              (when (not shop-view?)(when dice-rolled? (end-turn-btn)))
+                                                              ]))
+                                           }}
                          :bottom (hand-view (:hand player))
-                         :center {:fx/type :anchor-pane
-                                  :children [{:fx/type :stack-pane
-                                              :anchor-pane/left 0
-                                              :anchor-pane/right 0
-                                              :anchor-pane/top 0
-                                              :anchor-pane/bottom 0
-                                              :children [(image-group state)
-                                                         (roads-view)
-                                                         (spots-view)]}]}}}}))
+                         :center
+                         {:fx/type :anchor-pane
+                          :children
+                          [{:fx/type :stack-pane
+                            :anchor-pane/left 0
+                            :anchor-pane/right 0
+                            :anchor-pane/top 0
+                            :anchor-pane/bottom 0
+                            :children
+                            (if shop-view?
+                              ;; Kada je shop-view aktivan, prikaži jedan od shop prikaza (jedan vektor sa komponentama)
+                              [(cond
+                                 (:card-shop-buy @*state)  {:fx/type :v-box
+                                                            :spacing 8
+                                                            :alignment :center
+                                                            :children [(shop-buy-card)
+                                                                       (buy-this-card-btn)
+                                                                       (exit-shop-button)]}
+                                 (:card-shop-sell @*state) {:fx/type :v-box
+                                                            :spacing 8
+                                                            :alignment :center
+                                                            :children [(shop-sell-card)
+                                                                       (sell-this-card-btn)
+                                                                       (exit-shop-button)]}
+                                 :else nil)]
+                              ;; Kada nije shop-view, prikazi više komponenti (više elemenata vektora)
+                              [(image-group state)
+                               (roads-view)
+                               (spots-view)])}]}
+
+                         }}}))
 (defn start-game-view [state]
   (let [screen-bounds (.getVisualBounds (Screen/getPrimary))
   width (.getWidth screen-bounds)
@@ -786,6 +812,45 @@
                                     (roads-view)
                                     (spots-view)
                                     ]}}}))
+(defn end-game-view [state]
+  (let [screen-bounds (.getVisualBounds (Screen/getPrimary))
+        width (.getWidth screen-bounds)
+        height (.getHeight screen-bounds)
+        winner (:winner @*state)]
+    {:fx/type :stage
+     :width width
+     :height height
+     :x (.getMinX screen-bounds)
+     :y (.getMinY screen-bounds)
+     :showing true
+     :title "CATAN - Game Over"
+     :scene {:fx/type :scene
+             :root {:fx/type :border-pane
+                    :style "-fx-background-color: #1e90ff;"
+                    :top {:fx/type :v-box
+                          :alignment :center
+                          :padding 10
+                          :children [{:fx/type :label
+                                      :text (str "PLAYER " winner " WINS!")
+                                      :style "-fx-font-size: 72pt; -fx-font-weight: bold; -fx-text-fill: white;"
+                                      :alignment :center}]}
+                    :center {:fx/type :stack-pane
+                             :children [{:fx/type :label
+                                         :text "Thank you for playing CATAN"
+                                         :style "-fx-font-size: 24pt; -fx-text-fill: white;"
+                                         :alignment :center}]}
+                    }}}))
+(defn update-winner []
+  (let [players (:players @*state)
+        winner-player (some (fn [player]
+                              (when (>= (:vp player) 10)
+                                (:name player)))
+                            players)]
+    (if winner-player
+      (swap! *state assoc
+             :winner winner-player
+             :fx/type end-game-view)
+      @*state)))
 (defn take-resources [coords number]
   "function which from board when you pass coordinates of one spots and number and extract info of resources
   connected with that spot"
@@ -892,9 +957,6 @@
                          total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
                      (assoc player :vp total-vp)))
                  players))))))
-
-
-
 (defn update-current-player-road-length! []
   (let [player-idx (dec (:player-turn @*state))
         path [:players player-idx :road-length]]
@@ -923,9 +985,6 @@
     (when (>= max-size 3)
       (when (> max-size current-winner-size)
         (swap! *state assoc :winner-army-size (:name max-player))))))
-
-(defn monopolize)
-
 (defn update-all-hands-second-half []
   (swap! *state
          (fn [state]
@@ -957,8 +1016,10 @@
                                   (swap! *state assoc :move-thief true)
                                   (swap! *state update-in [:players player-idx :army-size]
                                          (fnil inc 0))
+                                  (swap! *state assoc :on-dice-7 true)
                                   (player-with-largest-army)
-                                  (update-players-vp))
+                                  (update-players-vp)
+                                  (update-winner))
 
                                 (= (:clicked-resource @*state) "road-building")
                                 (do
@@ -967,14 +1028,7 @@
                                   (swap! *state assoc :build-roads-activate true)
                                   )
 
-                                (= (:clicked-resource @*state) "year-of-plenty")
-                                (do
-                                  (swap! *state assoc :card-shop-buy true)
-                                  (swap! *state assoc :take-resource-card? true))
 
-                                (= (:clicked-resource @*state) "monopoly")
-                                (do
-                                  (swap! *state assoc :game-massage "CHOOSE RESOURCE TO MONOPOLIZE"))
                                 )
                               (swap! *state assoc :clicked-resource nil))
 
@@ -1013,13 +1067,15 @@
                         (swap! *state assoc :move-thief true)
                         (update-all-hands-second-half)
                         (swap! *state assoc :dice-activate false)
+                        (swap! *state assoc :on-dice-7 true)
                         )
 
                         (doseq [coord (:spots @*state)]
                         (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
                                                    dice-sum))
                         ))
-                  (swap! *state assoc :dice-activate false)))
+                  (swap! *state assoc :dice-activate false)
+                  (swap! *state assoc :dice-rolled true)))
     :spots-click
     (let [coords (:spot-coordinates event)
           booked-spots (:booked-spots @*state)
@@ -1077,6 +1133,7 @@
               (swap! *state assoc :settlement-build false)
               (swap! *state assoc :town-build false)
               (update-players-vp)
+              (update-winner)
               ))))
       )
     :roads-click
@@ -1099,13 +1156,15 @@
                   (swap! *state update :booked-roads conj road-coords)
                   (update-current-player-road-length!)
                   (player-with-longest-route)
-                  (update-players-vp))
+                  (update-players-vp)
+                  (update-winner))
               (do (build-road road-coords)
                   (swap! *state update :booked-roads conj road-coords)
                   (swap! *state assoc :road-build false)
                   (update-current-player-road-length!)
                   (player-with-longest-route)
-                  (update-players-vp)))
+                  (update-players-vp)
+                  (update-winner)))
 
             (when (= phase "Initial")
               (if (= player-turn player-count)
@@ -1115,14 +1174,16 @@
                   (swap! *state assoc :initial-info "SECOND INITIAL PHASE - PLACE YOUR SECOND SETTLEMENT")
                   (update-current-player-road-length!)
                   (player-with-longest-route)
-                  (update-players-vp))
+                  (update-players-vp)
+                  (update-winner))
                 (do
                   (swap! *state assoc :settlement-build true)
                   (swap! *state update :player-turn #(player-turn-inc % player-count))
                   (swap! *state assoc :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS")
                   (update-current-player-road-length!)
                   (player-with-longest-route)
-                  (update-players-vp))))
+                  (update-players-vp)
+                  (update-winner))))
 
             (when (= phase "Second-Initial")
               (swap! *state assoc :settlement-build true)
@@ -1133,17 +1194,20 @@
                 (swap! *state assoc :fx/type game-view)
                 (update-current-player-road-length!)
                 (player-with-longest-route)
-                (update-players-vp))
+                (update-players-vp)
+                (update-winner))
               (when (not= player-turn 1)
                 (swap! *state update :player-turn #(player-turn-dec %))
                 (swap! *state assoc :initial-info "SECOND INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS")
                 (update-current-player-road-length!)
                 (player-with-longest-route)
-                (update-players-vp))))))
+                (update-players-vp)
+                (update-winner))))))
       (println "No active to build road, press buy road button")
       (update-current-player-road-length!)
       (player-with-longest-route)
-      (update-players-vp))
+      (update-players-vp)
+      (update-winner))
 
     :circle-click
     (if (:move-thief @*state)
@@ -1169,6 +1233,7 @@
         (swap! *state assoc :restricted-area coords)
         (swap! *state assoc :restricted-number clicked-number)
         (swap! *state assoc :move-thief false)
+        (swap! *state assoc :on-dice-7 false)
         )
       (swap! *state assoc :game-massage "YOU CAN'T MOVE THIEF IF YOU DIDN'T GET 7 ON DICE"))
 
@@ -1178,7 +1243,8 @@
     :end-turn (do
                 (swap! *state (fn [s](assoc s :player-turn (player-turn-inc (:player-turn s) (count (:players s))))))
                 (swap! *state assoc :clicked-resource nil)
-                (swap! *state assoc :dice-activate true))
+                (swap! *state assoc :dice-activate true)
+                (swap! *state assoc :dice-rolled false))
     :buy-dev-card-btn (take-development-card)
     :buy-settlement-btn (do
                           (swap! *state assoc :settlement-build true)
@@ -1193,9 +1259,11 @@
                     (swap! *state assoc :town-build false)
                     (swap! *state assoc :settlement-build false))
     :buy-card-btn (do
+                    (swap! *state assoc :shop-view true)
                     (swap! *state assoc :card-shop-buy true)
                     (swap! *state assoc :clicked-resource nil))
-    :exit-shop ((swap! *state assoc :card-shop-buy false)
+    :exit-shop ((swap! *state assoc :shop-view false)
+                (swap! *state assoc :card-shop-buy false)
                 (swap! *state assoc :card-shop-sell false))
     :card-click (swap! *state assoc :clicked-resource (:resource event))
     :buy-this-card (let [take-resource-card (:take-resource-card? @*state)]
@@ -1217,8 +1285,8 @@
                          (swap! *state assoc :buy-resource (:clicked-resource @*state))
                          (swap! *state assoc :clicked-resource nil))
                        )
-    :monopolize (monopolize)
     :sell-this-card (do
+                      (swap! *state assoc :shop-view false)
                       (swap! *state assoc :card-shop-sell false)
                       (swap! *state assoc :sell-resource (:clicked-resource @*state))
                       (let [player-idx (dec (:player-turn @*state))
