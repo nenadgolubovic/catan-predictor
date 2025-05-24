@@ -9,7 +9,7 @@
   (let [index (some #(when (= (second %) cards-type) (first %))
                     (map-indexed vector hand))]
     (if index
-      (into (subvec hand 0 index) (subvec hand (inc index))) ;Take all elements from 0 to index and from index+1 to end
+      (vec (concat (subvec hand 0 index) (subvec hand (inc index)))) ; vraća vektor
       hand)))
 
 (defn remove-n-cards

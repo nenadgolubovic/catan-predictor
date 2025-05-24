@@ -445,7 +445,7 @@
 (defn activate-button
   []
   {:fx/type :button
-   :text      "Activate"
+   :text      "Activate dev card"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :on-action {:event/type :activate-dev-card}
    })
