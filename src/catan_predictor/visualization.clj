@@ -26,56 +26,7 @@
 
 
 
-(defn add-edge
-  [graph node neighbor]
-  (update graph node (fnil conj []) neighbor))
 
-(defn build-graph
-  [edges]
-  (reduce (fn [g [a b]]
-            (-> g
-                (add-edge a b)
-                (add-edge b a)))
-          {}
-          edges))
-
-(defn find-all-paths
-  [graph start end & [path]]
-  (let [path (conj (or path []) start)]
-    (if (= start end)
-      [path]
-      (when-let [neighbors (graph start)]
-        (apply concat
-               (for [node neighbors
-                     :when (not (some #(= % node) path))]
-                 (find-all-paths graph node end path)))))))
-
-(defn longest-path
-  [paths]
-  (reduce
-    (fn [longest path]
-      (if (> (count path) (count longest))
-        path
-        longest))
-    []
-    paths))
-
-(defn longest-route-length
-  [roads]
-  (let [graph (build-graph roads)
-        nodes (keys graph)
-        all-paths (for [start nodes
-                        end nodes
-                        :when (not= start end)]
-                    (find-all-paths graph start end))
-        flat-paths (apply concat all-paths)
-        longest (longest-path flat-paths)]
-    (max 0 (dec (count longest)))))
-
-
-
-; calculate bigest army
-; put who is best longest
 ; to can activate dev cards - just make klcik, fucntion made
 ; (thief same as 7
 ; vp nothing
@@ -83,6 +34,10 @@
 ; build road 2 times
 ; have to make monopoly
 ; )
+
+; calculate bigest army
+
+
 ; Make won message
 ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
 ;just dice one time
@@ -386,14 +341,11 @@
                  :fit-height 200}
      :on-action {:event/type :dice-view}}))
 (defn dice-views []
-  (let [active? (get @*state :dice-activate)
-        opacity (if active? 1.0 0.3)]
     {:fx/type   :h-box
      :alignment :center
      :children  [{:fx/type    :image-view
                   :fit-width  200
                   :fit-height 200
-                  :opacity    opacity
                   :image      {:fx/type :image
                                :url     (get-dice-image-url (get @*state :dice-1))}
                   :clip {:fx/type :rectangle
@@ -404,14 +356,13 @@
                  {:fx/type    :image-view
                   :fit-width  200
                   :fit-height 200
-                  :opacity    opacity
                   :image      {:fx/type :image
                                :url     (get-dice-image-url (get @*state :dice-2))}
                   :clip {:fx/type :rectangle
                          :width 200
                          :height 200
                          :arc-width 40
-                         :arc-height 40}}]}))
+                         :arc-height 40}}]})
 (defn name-input []
   {:fx/type :text-field
    :prompt-text "Enter name"
@@ -895,7 +846,47 @@
     (swap! *state update-in [:players player-idx :dev-cards] #(conj % chosen))
     (swap! *state update-in [:players player-idx :hand] shop/buy-development-card)
     (println "Chosen card:" chosen)))
-
+(defn add-edge
+  [graph node neighbor]
+  (update graph node (fnil conj []) neighbor))
+(defn build-graph
+  [edges]
+  (reduce (fn [g [a b]]
+            (-> g
+                (add-edge a b)
+                (add-edge b a)))
+          {}
+          edges))
+(defn find-all-paths
+  [graph start end & [path]]
+  (let [path (conj (or path []) start)]
+    (if (= start end)
+      [path]
+      (when-let [neighbors (graph start)]
+        (apply concat
+               (for [node neighbors
+                     :when (not (some #(= % node) path))]
+                 (find-all-paths graph node end path)))))))
+(defn longest-path
+  [paths]
+  (reduce
+    (fn [longest path]
+      (if (> (count path) (count longest))
+        path
+        longest))
+    []
+    paths))
+(defn longest-route-length
+  [roads]
+  (let [graph (build-graph roads)
+        nodes (keys graph)
+        all-paths (for [start nodes
+                        end nodes
+                        :when (not= start end)]
+                    (find-all-paths graph start end))
+        flat-paths (apply concat all-paths)
+        longest (longest-path flat-paths)]
+    (max 0 (dec (count longest)))))
 (defn update-players-vp []
   (swap! *state update :players
          (fn [players]
@@ -911,7 +902,6 @@
                        total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
                    (assoc player :vp total-vp)))
                players))))))
-
 (defn update-current-player-road-length! []
   (let [player-idx (dec (:player-turn @*state))
         path [:players player-idx :road-length]]
@@ -919,7 +909,6 @@
            (longest-route-length (get-in @*state [:players player-idx :roads])))
     )
   )
-
 (defn player-with-longest-route []
   (let [players (:players @*state)
         current-winner-name (:winner-longest-route @*state)
@@ -932,6 +921,29 @@
         (swap! *state assoc :winner-longest-route (:name max-player))
         ))))
 
+(defn update-all-hands-second-half []
+  (swap! *state
+         (fn [state]
+           (let [players (:players state)]
+             (let [updated-players
+                   (mapv (fn [player-map]
+                           (let [hand (:hand player-map)
+                                 new-hand (if (> (count hand) 7)
+                                            (let [shuffled (shuffle hand)
+                                                  half (quot (count shuffled) 2)]
+                                              (drop half shuffled))
+                                            hand)]
+                             (assoc player-map :hand new-hand)))
+                         players)]
+               (assoc state :players updated-players))))))
+
+
+(def a (atom {:players {:player1 {:name "dsa"
+                                  :hand ['brick 'wood 'sheep]}
+                        :player2 {:name "xyz"
+                                  :hand ['ore 'wheat 'sheep 'brick]}
+                        :player3 {:name "abc"
+                                  :hand ['wood 'wheat]}}}))
 
 
 (defn event-handler [event]
@@ -984,10 +996,14 @@
                       (do
                         (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
                         (swap! *state assoc :move-thief true)
+                        (update-all-hands-second-half)
+                        (swap! *state assoc :dice-activate false)
                         )
-                      (doseq [coord (:spots @*state)]
+
+                        (doseq [coord (:spots @*state)]
                         (filing-hand-with-resource (:spot-coordinates (:on-mouse-clicked coord))
-                                                   dice-sum))))
+                                                   dice-sum))
+                        ))
                   (swap! *state assoc :dice-activate false)))
     :spots-click
     (let [coords (:spot-coordinates event)
