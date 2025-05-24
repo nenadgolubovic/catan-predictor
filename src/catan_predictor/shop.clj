@@ -21,25 +21,10 @@
       (recur (remove-card type-card hand) (dec n))
       hand)))
 
-(defn add-cards
-  [card-type  hand]
-  "Add n cards of a given type in the hand"
-  (into hand card-type))
 
-(defn exchange-cards
-  [state player-idx sell-card-type n buy-card-type]
-  (swap! state
-         update-in
-         [:players player-idx :hand :cards]
-         (fn [cards]
-           (-> cards
-               (remove-n-cards sell-card-type n)
-               (add-cards buy-card-type )))))
+(defn buy-settlement [hand]
+    (remove-n-cards "wood" (remove-n-cards "brick" (remove-n-cards "wool" (remove-n-cards "grain" hand 1) 1) 1) 1) )
 
-(def resources #{"wool" "brick" "wood" "ore" "grain"})
-(defn buy-settlement
-  [hand]
-  (remove-n-cards "wood" (remove-n-cards "brick" (remove-n-cards "wool" (remove-n-cards "grain" hand 1) 1) 1) 1))
 (defn buy-town
   [hand]
   (remove-n-cards "ore" (remove-n-cards "grain" hand 2) 3))

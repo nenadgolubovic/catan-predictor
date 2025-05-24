@@ -6,7 +6,6 @@
             [catan-predictor.roads :as roads]
             [catan-predictor.area :as area]
             [catan-predictor.centers :as centers]
-            [catan-predictor.player :as player]
             [catan-predictor.shop :as shop]
             )
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
@@ -17,9 +16,7 @@
            [javafx.stage Screen]))
 
 
-(def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
-(def points (spots/make-spots-from-centers centers))
-(def r (roads/roads points))
+
 (defn create-spot-view [x y]
   {:fx/type          :circle
    :center-x         (* 100 x)
@@ -67,17 +64,14 @@
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
                        :players []
                        :players-count 0
-                       :spots (map #(create-spot-view (first %) (second %)) points)
+                       :spots (map #(create-spot-view (first %) (second %)) (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))))
                        :booked-spots []
                        :booked-roads []
                        :roads (map #(create-line-view (first (first %))
                                                       (second (first %))
                                                       (first (second %))
-                                                      (second (second %))) r)
-                       :areas (vec (area/create-areas-from-centers
-                                     points
-
-                                                                   centers
+                                                      (second (second %))) (roads/roads (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))))
+                       :areas (vec (area/create-areas-from-centers (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))) (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))
                                                                    (atom ["wool" "wool" "wool" "wool"
                                                                           "brick" "brick" "brick"
                                                                           "wood" "wood" "wood" "wood"
@@ -254,7 +248,7 @@
                    (coords-in-last-settlement? coords (:name player))))
       (when game-phase
         (try
-          (swap! *state update-in [:players player-idx :hand] shop/buy-settlement)
+          (swap! *state update-in [:players player-idx :hand] shop/buy-road)
           (catch Exception e
             (swap! *state assoc :game-massage e))))
 
@@ -875,11 +869,6 @@
                  players))))
 (defn handle-numbers-click [number]
   (println "Clicked:" number))
-(defn add-player
-  [state player-key name color]
-  (swap! state update player-key
-         (fn [existing-players]
-           (conj existing-players (player/create-player name color)))))
 (defn player-turn-inc
   [number num-players]
   "function that increments the player's ordinal number so that we know who has the move,
@@ -1079,7 +1068,7 @@
     :spots-click
     (let [coords (:spot-coordinates event)
           booked-spots (:booked-spots @*state)
-          all-spots points
+          all-spots (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
           near-spots (filter #(= 1.0 (utils/distance-1-2 % coords)) all-spots)
           phase (:phase @*state)
           areas (:areas @*state)]
