@@ -21,26 +21,13 @@
            [javafx.geometry Rectangle2D]
            [javafx.stage Screen]))
 
-
 ;Have to add functionality:
-
-
-
-
-; to can activate dev cards - just make klcik, fucntion made
-; (thief same as 7
-; vp nothing
+;
 ; resource - buy card only 2 times
-; build road 2 times
 ; have to make monopoly
 ; )
-
-; calculate bigest army
-
-
 ; Make won message
 ; validation that you only can buy settlement and road if you have cards, otherwise message wil be showned
-;just dice one time
 
 
 (def centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
@@ -82,6 +69,8 @@
                        :card-card-sell false
                        :take-resource-card? false
                        :winner-longest-route nil
+                       :winner-army-size nil
+                       :activated-road-building false
                        :game-massage "WELCOME"
                        :phase "Initial"
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
@@ -605,7 +594,7 @@
                         {:player (:name player)
                          :vp (or (:vp player) 0)
                          :road-length (or (:road-length player) 0)
-                         :army-size (or (:knight-length player) 0)
+                         :army-size (or (:army-size player) 0)
                          :color (:color player)})
                       (:players @*state)))
      :columns [{:fx/type :table-column
@@ -888,20 +877,24 @@
         longest (longest-path flat-paths)]
     (max 0 (dec (count longest)))))
 (defn update-players-vp []
-  (swap! *state update :players
-         (fn [players]
-           (let [winner-longest-route (:winner-longest-route @*state)]
-           (vec
-             (map-indexed
-               (fn [idx player]
-                 (let [count-settlement (count (:settlement player))
-                       count-towns (* 2 (count (:towns player)))
-                       vp-cards (count (filter #(= % "victory-point") (:dev-cards player)))
-                       longest-route (if (= (:name player) winner-longest-route) 2 0)
-                       biggest-army (if (:biggest-army player) 2 0)
-                       total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
-                   (assoc player :vp total-vp)))
-               players))))))
+  (let [winner-longest-route (:winner-longest-route @*state)
+        winner-army-size (:winner-army-size @*state)]
+    (swap! *state update :players
+           (fn [players]
+             (vec
+               (map-indexed
+                 (fn [idx player]
+                   (let [count-settlement (count (:settlement player))
+                         count-towns (* 2 (count (:towns player)))
+                         vp-cards (count (filter #(= % "victory-point") (:dev-cards player)))
+                         longest-route (if (= (:name player) winner-longest-route) 2 0)
+                         biggest-army (if (= (:name player) winner-army-size) 2 0)
+                         total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
+                     (assoc player :vp total-vp)))
+                 players))))))
+
+
+
 (defn update-current-player-road-length! []
   (let [player-idx (dec (:player-turn @*state))
         path [:players player-idx :road-length]]
@@ -920,6 +913,18 @@
       (when (> max-length current-winner-length)
         (swap! *state assoc :winner-longest-route (:name max-player))
         ))))
+(defn player-with-largest-army []
+  (let [players (:players @*state)
+        current-winner-name (:winner-army-size @*state)
+        current-winner (some #(when (= (:name %) current-winner-name) %) players)
+        current-winner-size (or (:army-size current-winner) 0)
+        max-player (apply max-key #(or (:army-size %) 0) players)
+        max-size (or (:army-size max-player) 0)]
+    (when (>= max-size 3)
+      (when (> max-size current-winner-size)
+        (swap! *state assoc :winner-army-size (:name max-player))))))
+
+(defn monopolize)
 
 (defn update-all-hands-second-half []
   (swap! *state
@@ -936,34 +941,44 @@
                              (assoc player-map :hand new-hand)))
                          players)]
                (assoc state :players updated-players))))))
-
-
-(def a (atom {:players {:player1 {:name "dsa"
-                                  :hand ['brick 'wood 'sheep]}
-                        :player2 {:name "xyz"
-                                  :hand ['ore 'wheat 'sheep 'brick]}
-                        :player3 {:name "abc"
-                                  :hand ['wood 'wheat]}}}))
-
-
 (defn event-handler [event]
 
   (case (:event/type event)
-    :activate-dev-card ((when (= :card-click "knight")
-                          (do
-                            (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
-                            (swap! *state assoc :move-thief true))
-                          )
-                          (when (= :card-click "road-building"))
-                          (do (swap! *state assoc :road-build true)
-                              (swap! *state assoc :game-massage "YOU ACTIVATED CARD FOR BUILDING 2 ROAD, PLEASE SELECT 2"))
-                          (when (= :card-click "year-of-plenty")
-                            (do (swap! *state assoc :card-shop-buy true)
-                                (swap! *state assoc :take-resource-card? true)))
-                          (when (= :card-click "monopoly"))
-                          (swap! *state assoc :card-click nil)
-                          )
+    :activate-dev-card (let [player-idx (dec (:player-turn @*state))
+                             resource (:clicked-resource @*state)]
+                         (swap! *state update-in [:players player-idx :dev-cards]
+                                (fn [cards]
+                                  (let [[before [match & after]] (split-with #(not= % resource) cards)]
+                                    (vec (concat before after)))))
+                          (do (cond
+                                (= (:clicked-resource @*state) "knight")
+                                (do
+                                  (swap! *state assoc :game-massage "SELECT THE AREA YOU WANT TO RESTRICT")
+                                  (swap! *state assoc :move-thief true)
+                                  (swap! *state update-in [:players player-idx :army-size]
+                                         (fnil inc 0))
+                                  (player-with-largest-army)
+                                  (update-players-vp))
 
+                                (= (:clicked-resource @*state) "road-building")
+                                (do
+                                  (swap! *state assoc :road-build true)
+                                  (swap! *state assoc :game-massage "YOU ACTIVATED CARD FOR BUILDING 2 ROAD, PLEASE SELECT 2")
+                                  (swap! *state assoc :build-roads-activate true)
+                                  )
+
+                                (= (:clicked-resource @*state) "year-of-plenty")
+                                (do
+                                  (swap! *state assoc :card-shop-buy true)
+                                  (swap! *state assoc :take-resource-card? true))
+
+                                (= (:clicked-resource @*state) "monopoly")
+                                (do
+                                  (swap! *state assoc :game-massage "CHOOSE RESOURCE TO MONOPOLIZE"))
+                                )
+                              (swap! *state assoc :clicked-resource nil))
+
+                          )
 
     :add (do
            (swap! *state
@@ -1079,9 +1094,9 @@
           (do
             (if build-roads-card-activate?
               (do (build-road road-coords)
+
                   (swap! *state assoc :build-roads-activate false)
                   (swap! *state update :booked-roads conj road-coords)
-                  (swap! *state assoc :road-build false)
                   (update-current-player-road-length!)
                   (player-with-longest-route)
                   (update-players-vp))
@@ -1202,6 +1217,7 @@
                          (swap! *state assoc :buy-resource (:clicked-resource @*state))
                          (swap! *state assoc :clicked-resource nil))
                        )
+    :monopolize (monopolize)
     :sell-this-card (do
                       (swap! *state assoc :card-shop-sell false)
                       (swap! *state assoc :sell-resource (:clicked-resource @*state))
@@ -1234,7 +1250,6 @@
                       (swap! *state assoc :clicked-resource nil))
     )
   )
-
 (def renderer
   (fx/create-renderer
     :opts {:fx.opt/map-event-handler event-handler}))

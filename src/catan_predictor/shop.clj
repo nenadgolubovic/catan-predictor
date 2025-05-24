@@ -6,10 +6,11 @@
 (defn remove-card
   [cards-type hand]
   "Select type of cards and delete one from hand"
-  (let [index (some #(when (= (second %) cards-type) (first %))
+  (let [hand (vec hand)
+        index (some #(when (= (second %) cards-type) (first %))
                     (map-indexed vector hand))]
     (if index
-      (vec (concat (subvec hand 0 index) (subvec hand (inc index)))) ; vraća vektor
+      (vec (concat (subvec hand 0 index) (subvec hand (inc index))))
       hand)))
 
 (defn remove-n-cards
