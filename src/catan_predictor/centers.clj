@@ -1,15 +1,7 @@
 (ns catan-predictor.centers
   (:require [catan-predictor.utils :as utils]))
 
-(defn centers [points x y]
-  "Centers will be every spot approximately 2 far away from the given [x y] point"
-  (let [target-distance 2.000]
-    (concat
-      [[x y]]
-      (filter
-        #(= (utils/distance (- (second (first %)) x) (- (first (first %)) y) 3)
-            target-distance) points))
-    ))
+
 
 (defn make-ring-area-centers
   [x y r]

@@ -63,13 +63,3 @@
   [points centers resources numbers]
   (map #(create-area % points resources numbers) centers))
 
-
-
-
-
-
-
-
-
-
-(def center [1.732 0.0])
