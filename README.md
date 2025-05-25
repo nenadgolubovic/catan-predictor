@@ -200,6 +200,85 @@ There is also a table displaying the current players and a "Start Game" button t
 
 ## Rules
 
+### Resource Collection
+
+Players receive resources if they have a settlement or town adjacent to resource areas.
+They receive the resources produced by the adjacent areas.
+
+- If a settlement is adjacent to an area, the player receives 1 resource from that area.
+- If a town is adjacent to an area, the player receives 2 resources from that area.
+
+### Building 
+
+To build roads, settlements, and towns, you must be the current player 
+(it must be your turn) and have the required resources in your hand. 
+The resources needed for construction are as follows:
+
+- Roads - 1 brick resource and 1 wood resource
+- Settlements - 1 brick resource, 1 wood resource, 1 wool resource and 1 grain resource
+- Towns - 2 grain resource and 3 ore resource
+- Development Card - 1 wool resource, 1 grain resource and 1 ore resource
+
+Roads can only be built if there is a town, settlement, or another road adjacent to the location.
+Roads cannot be built randomly anywhere on the map.
+
+Settlements can be built only if there is a road directly next to the building spot.
+Settlements must be connected by a road.
+Settlements cannot be built if there is another settlement within two road lengths from the new settlement.
+This means that to build a settlement, it must be at least two roads away from any other settlement.
+
+Towns can be built only on spots where there is already a settlement.
+
+### Role dice
+
+- When the dice are rolled, all players receive resources if they have settlements adjacent to
+the resource area corresponding to the number rolled.
+- If a player rolls a 7, all players who have
+more than 7 resource cards in their hand (8 or more) must discard half of their cards.
+
+- The player who rolled the 7 gets to move the thief figure to any area they choose.
+
+
+### Thief role
+- When the thief figure is placed on an area, that area becomes restricted.
+- If the number corresponding 
+to that area is rolled on the dice, no player receives resources from that area.
+
+### Activate development cards
+
+- Cards can be activated at any time during the game.
+- The explanation for each card can be found in the Development Card section.
+
+
+### Longest Road
+- A player receives the Longest Road card if they have 
+a road of length 3 or more, and their road is the longest compared to all other players.
+- If multiple players have the same longest road length, the card stays with 
+the player who first reached that length.
+
+### Biggest Army
+
+- A player who has activated 3 or more "knight" development cards 
+and has the most activated "knight" cards has the right to the Largest Army card.
+- If multiple players have the same number of activated knight cards, the card 
+goes to the player who first reached that number of activated knight cards.
+
+### Trade
+
+A player has the right to trade 4 identical resources for 1 resource of their choice.
+
+- For example, a player can trade 4 grain resources for 1 wood resource.
+
+### Victory points
+
+A player can earn victory points by owning the following:
+- Settlement -> 1 victory point
+- Town -> 2 victory point
+- Biggest Army -> 2 victory point
+- Longest Road -> 2 victory point
+- Victory point Development Card -> 1 victory point
+
+
 
 ## How to Play
 
@@ -258,7 +337,29 @@ Since their settlement is on an area rich in wool with the number 3, they receiv
 On the side, buttons will appear for the player to choose from.
 The player ends their turn by pressing the "End Turn" button, after which the next player takes their turn.
 
+### Roling dice
+### Kupovina settlement
+### Kupovina town
+### Trade
 
+If a player has 4 identical resources, they get the option to trade resources.
+On the right side, a Buy Road button appears.
+
+By clicking the Buy Card button, the player opens the shop window where they can:
+![Map Preview](resources/static/buy-card-game-readme.jpg)
+- Choose the resource they want to buy and click "Buy this card".
+![Map Preview](resources/static/buy-shop-readme.jpg)
+- Select the resource they want to sell and click "Sell this card" to trade in 4 identical resources.
+  ![Map Preview](resources/static/sell-shop-readme.jpg)
+The player can exit the shop at any time.
+
+![Map Preview](resources/static/after-buy-readme.jpg)
+
+### Win
+
+A player wins when they collect 10 victory points.
+
+![Map Preview](resources/static/win.jpg)
 
 ## Further Development
 In the future, I plan to expand the game with exciting new features, 

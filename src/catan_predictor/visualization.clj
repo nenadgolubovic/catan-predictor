@@ -1232,7 +1232,9 @@
                 (swap! *state assoc :clicked-resource nil)
                 (swap! *state assoc :dice-activate true)
                 (swap! *state assoc :dice-rolled false))
-    :buy-dev-card-btn (take-development-card)
+    :buy-dev-card-btn (do
+                        (take-development-card)
+                        (update-players-vp))
     :buy-settlement-btn (do
                           (swap! *state assoc :settlement-build true)
                           (swap! *state assoc :town-build false)
