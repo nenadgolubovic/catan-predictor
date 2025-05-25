@@ -338,8 +338,68 @@ On the side, buttons will appear for the player to choose from.
 The player ends their turn by pressing the "End Turn" button, after which the next player takes their turn.
 
 ### Roling dice
-### Kupovina settlement
-### Kupovina town
+
+Svaki igrac ima pravo da jednom po potezu vrti kocku. Na pocetku igre se baca kocka
+gde nakon dobijenog broja igrac moze da igra poteze kao sto su pravljenje settlementa, town a
+i pravljenje puteva, aktiviranje development karti i slicno.
+
+Igrac baca kockicu pritiskom na dve crvene kockice sa desne strane.
+
+![Map Preview](resources/static/dice-button-readme.jpg)
+
+prilikom pritiska na dugme igrac dobija nasumican broj izmedju 2 i 12.
+
+### Building a Settlement
+
+To build a Settlement, the player must collect the required amount of resources.
+
+When the player clicks the "Buy Settlement" button, they gain the ability to click on a 
+valid spot on the board and place their settlement there.
+
+![Map Preview](resources/static/buy-settlement-readme.jpg)
+
+resources/static/buy-settlement-readme.jpgNote: Settlements can only be built if:
+
+- They are connected to a road owned by the player.
+- They are at least two road lengths away from any other settlement.
+
+
+### Building a Town
+
+To build a Town, the player must collect the required amount of resources.
+
+![Map Preview](resources/static/buy-town-readme.jpg)
+
+When the player clicks the "Buy Town" button, they gain the ability to click on a
+valid spot on the board and place their town there.
+
+Note: Town can only be built on place where already existing settlement.
+
+### Buy a development card
+
+To buy a Development Card, the player must have the required combination of resources.
+
+When the player clicks the "Buy Development Card" button, a random development card is
+added to their development hand, if the player has enough resources.
+
+![Map Preview](resources/static/buy-dev-card-readme.jpg)
+
+![Map Preview](resources/static/dev-cards-readme.jpg)
+
+
+
+### Activate a development card
+
+When a player clicks on a card in their development hand, the button 
+"Activate Dev Card" appears.
+By clicking on this button, the player activates the 
+selected development card and immediately receives the 
+benefit of that specific card (see details in the Development Card section).
+Only one development card can be activated per turn, and some 
+cards (like Victory Points) are activated automatically when drawn.
+
+
+
 ### Trade
 
 If a player has 4 identical resources, they get the option to trade resources.
@@ -347,10 +407,15 @@ On the right side, a Buy Road button appears.
 
 By clicking the Buy Card button, the player opens the shop window where they can:
 ![Map Preview](resources/static/buy-card-game-readme.jpg)
+
 - Choose the resource they want to buy and click "Buy this card".
+
 ![Map Preview](resources/static/buy-shop-readme.jpg)
+
 - Select the resource they want to sell and click "Sell this card" to trade in 4 identical resources.
-  ![Map Preview](resources/static/sell-shop-readme.jpg)
+
+![Map Preview](resources/static/sell-shop-readme.jpg)
+- 
 The player can exit the shop at any time.
 
 ![Map Preview](resources/static/after-buy-readme.jpg)
@@ -359,7 +424,43 @@ The player can exit the shop at any time.
 
 A player wins when they collect 10 victory points.
 
+
 ![Map Preview](resources/static/win.jpg)
+
+
+## Tips and tricks
+Conquering the island of Catan requires a mix of strategy, timing, and a bit of luck. Here are some useful tips to help you increase your chances of victory:
+
+🏝️ 1. Compete for island control
+Catan is a battle for space and resources. The sooner you claim strategic positions, the better control you'll have over the game. Aim for locations that give you access to varied resources.
+
+🌾 2. The more resources, the better
+Try to cover as many different resource types as possible with your initial settlements. This will give you more options and make you less dependent on trades.
+
+🎲 3. Pay attention to dice numbers
+Build settlements next to tiles with high-frequency numbers like 6, 8, 5, and 9. More frequent rolls mean more resources in the long run.
+
+🛣️ 4. Don’t forget about roads
+Plan your road network early! Roads are essential for expansion and winning the Longest Road card, which grants 2 extra victory points.
+
+🧱 5. Build smart: settle first, then upgrade
+Settlements give you access to new locations, while towns (cities) double your resource income. First expand, then upgrade!
+
+🃏 6. Don’t ignore development cards
+Development cards provide strategic advantages like knights, extra points, or powerful effects. They can change the course of the game – use them wisely.
+
+🧠 7. Trade strategically
+Trade your cards to gain a wider variety of resources. The more diverse your hand, the more flexible and aggressive your strategy can be – whether you're building roads, buying 
+development cards, or expanding your settlements.
+
+🐍 8. Use the thief tactically
+When you roll a 7, use the thief to block key resources from your opponents and steal a resource from a player – it’s a powerful move when used correctly.
+
+🏆 9. Track your opponents
+Keep an eye on how many victory points other players have, how many development cards they hold, and who is building rapidly. Stay one step ahead.
+
+🔟 10. Victory requires balance
+Don't focus on just one strategy (like only building roads). Mix settlements, towns, development cards, trades, and army to reach the winning 10 victory points.
 
 ## Further Development
 In the future, I plan to expand the game with exciting new features, 
