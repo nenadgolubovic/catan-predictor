@@ -141,7 +141,7 @@ If players are Player1, Player2, and Player3:\
 Players will see whose turn it is in the game message area.
 For example, if player Nenad is on turn, the message will show:
 
-![Map Preview](resources/static/nenad-readme.jpg)
+![Map Preview](resources/static/Nenad-readme.jpg)
 
 If Player "Nenad" selects a spot during the second initial phase, 
 he will receive resources from the adjacent edges.
