@@ -108,86 +108,94 @@ The current message is displayed at the top of the screen.
 
 ![Map Preview](resources/static/message-view-readme.jpg)
 
-Settlement, roads and towns. Roads are ful line, settlements are spots and towns are bigger spots.
+Settlement, roads and towns. Roads are full line, settlements are spots and towns are bigger spots.
 
 ![Map Preview](resources/static/spots-and-edges-readme.jpg)
 ![Map Preview](resources/static/town-readme.jpg)
 
-### Cards
 
-#### Numbers
+### Asset
 
-![Map Preview](resources/static/numbers-readme.jpg)
+#### Numbers and Resources
 
-#### Resources
-
-##### Forests - Produce Wood
-
-![Map Preview](resources/static/area-wood-readme.jpg)
-
-##### Hills - produce Brick
-
-![Map Preview](resources/static/area-brick-readme.jpg)
-
-##### Pasture - Produce Wool
-
-![Map Preview](resources/static/area-wool-readme.jpg)
-
-##### Mountains - Produce Ore
-
-![Map Preview](resources/static/area-ore-readme.jpg)
-
-##### Fields - Produce Grain
-
-![Map Preview](resources/static/area-grain-readme.jpg)
-
-##### Desert - Produces Nothing
-
-![Map Preview](resources/static/area-dust-readme.jpg)
-
-##### Wood
-
-![Map Preview](resources/static/resource-wood-readme.jpg)
-
-##### Brick
-
-![Map Preview](resources/static/resource-brick-readme.jpg)
-
-##### Wool
-
-![Map Preview](resources/static/resource-wool-readme.jpg)
-
-##### Grain
-
-![Map Preview](resources/static/resource-grain-readme.jpg)
-
-##### Ore
-
-![Map Preview](resources/static/resource-ore-readme.jpg)
+<table>
+  <tr>
+    <td>
+      <strong>Numbers</strong><br>
+      <img src="resources/static/numbers-readme.jpg" alt="Numbers Preview" width="150"/>
+    </td>
+    <td>
+      <strong>Forests - Produce Wood</strong><br>
+      <img src="resources/static/area-wood-readme.jpg" alt="Forests - Wood" width="150"/>
+    </td>
+    <td>
+      <strong>Hills - Produce Brick</strong><br>
+      <img src="resources/static/area-brick-readme.jpg" alt="Hills - Brick" width="150"/>
+    </td>
+    <td>
+      <strong>Pasture - Produce Wool</strong><br>
+      <img src="resources/static/area-wool-readme.jpg" alt="Pasture - Wool" width="150"/>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Mountains - Produce Ore</strong><br>
+      <img src="resources/static/area-ore-readme.jpg" alt="Mountains - Ore" width="150"/>
+    </td>
+    <td>
+      <strong>Fields - Produce Grain</strong><br>
+      <img src="resources/static/area-grain-readme.jpg" alt="Fields - Grain" width="150"/>
+    </td>
+    <td>
+      <strong>Desert - Produces Nothing</strong><br>
+      <img src="resources/static/area-dust-readme.jpg" alt="Desert - Nothing" width="150"/>
+    </td>
+    <td>
+      <strong>Wood</strong><br>
+      <img src="resources/static/resource-wood-readme.jpg" alt="Resource - Wood" width="150"/>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Brick</strong><br>
+      <img src="resources/static/resource-brick-readme.jpg" alt="Resource - Brick" width="150"/>
+    </td>
+    <td>
+      <strong>Wool</strong><br>
+      <img src="resources/static/resource-wool-readme.jpg" alt="Resource - Wool" width="150"/>
+    </td>
+    <td>
+      <strong>Grain</strong><br>
+      <img src="resources/static/resource-grain-readme.jpg" alt="Resource - Grain" width="150"/>
+    </td>
+    <td>
+      <strong>Ore</strong><br>
+      <img src="resources/static/resource-ore-readme.jpg" alt="Resource - Ore" width="150"/>
+    </td>
+  </tr>
+</table>
 
 #### Development Cards
 
-##### Knight 
-
-![Map Preview](resources/static/dev-knight-readme.jpg)
-
-This card, when activated, allows the player to relocate the thief figure to any desired area.
-
-##### Road building
-
-![Map Preview](resources/static/dev-road-building-readme.jpg)
-
-"This card, when activated, grants the player the ability to build two roads."
-
-##### Victory point
-
-![Map Preview](resources/static/dev-victory-point-readme.jpg)
-
-The card is not activated. When a player draws this card, they automatically receive one victory point.
-
-
-#### Areas
-
+<table>
+  <tr>
+    <td>
+      <img src="resources/static/dev-knight-readme.jpg" alt="Knight Card" width="150"/><br>
+      <strong>Knight</strong><br>
+      This card, when activated, allows the player to relocate the thief figure to any desired area.
+    </td>
+    <td>
+      <img src="resources/static/dev-road-building-readme.jpg" alt="Road Building Card" width="150"/><br>
+      <strong>Road Building</strong><br>
+      This card, when activated, grants the player the ability to build two roads.
+    </td>
+    <td>
+      <img src="resources/static/dev-victory-point-readme.jpg" alt="Victory Point Card" width="150"/><br>
+      <strong>Victory Point</strong><br>
+      The card is not activated. When a player draws this card, they automatically receive one victory point.
+    </td>
+  </tr>
+</table>
 
 ## Rules
 
