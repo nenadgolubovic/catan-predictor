@@ -48,7 +48,7 @@ are also randomly assigned to the center of each hex, ensuring a unique and unpr
 
 Each area present area rich in one resource :
 
-![Map Preview](resources\static\rules-produce-resource.jpg)
+![Map Preview](resources/static/rules-produce-resource.jpg)
 
 Edges and spots are used to build infrastructure on the map.
 Spots can be used to build settlements and towns.
@@ -57,11 +57,11 @@ Numbers are used to determine when and from where resources can be collected fro
 In this specific example, we see that the area is rich in ore, 
 it borders other areas, and the edges and spots between them are still without infrastructure.
 
-![Map Preview](resources\static\area-example-readme.jpg)
+![Map Preview](resources/static/area-example-readme.jpg)
 
 The map also includes a thief, who starts the game positioned in the desert.
 Throughout the game, the thief will move around the map and block resource collection from the area where it is currently located.
-![Map Preview](resources\static\pawn-readme.jpg)
+![Map Preview](resources/static/pawn-readme.jpg)
 
 ### Game view
 
@@ -69,49 +69,49 @@ On the start screen, there is a map, an "Add Player" button, a label to enter th
 There is also a table displaying the current players and a "Start Game" button to begin the game.
 
 
-![Map Preview](resources\static\start-game-view.jpg)
+![Map Preview](resources/static/start-game-view.jpg)
 
-Sa desne strane se nalazi tabela.
+On the right side, there is a table.
 
-![Map Preview](resources\static\table-readme.jpg)
+![Map Preview](resources/static/table-readme.jpg)
 
-On the right side, there is a table. Below the table, there are buttons.
+Below the table, there are buttons.
 
 ![Map Preview](resources/static/dice-button-readme.jpg)
 
-![Map Preview](resources\static\buy-card-readme.jpg)
-![Map Preview](resources\static\buy-dev-card-readme.jpg)
-![Map Preview](resources\static\buy-road-readme.jpg)
-![Map Preview](resources\static\buy-settlement-readme.jpg)
-![Map Preview](resources\static\buy-town-readme.jpg)
-![Map Preview](resources\static\end-turn-readme.jpg)
+![Map Preview](resources/static/buy-card-readme.jpg)
+![Map Preview](resources/static/buy-dev-card-readme.jpg)
+![Map Preview](resources/static/buy-road-readme.jpg)
+![Map Preview](resources/static/buy-settlement-readme.jpg)
+![Map Preview](resources/static/buy-town-readme.jpg)
+![Map Preview](resources/static/end-turn-readme.jpg)
 
 There are also two different views available: 
 one for displaying dice results, 
 
-![Map Preview](resources\static\dice-view-readme.jpg)
+![Map Preview](resources/static/dice-view-readme.jpg)
 
 and another for the development card hand, which includes an "Activate" button
 for activating cards.
 
-![Map Preview](resources\static\dev-cards-readme.jpg)
+![Map Preview](resources/static/dev-cards-readme.jpg)
 
 At the bottom of the screen, there is also a hand showing the player's resources.
 
-![Map Preview](resources\static\hand-readme.jpg)
+![Map Preview](resources/static/hand-readme.jpg)
 
 The game includes a shop feature.
 
-![Map Preview](resources\static\shop-readme.jpg)
+![Map Preview](resources/static/shop-readme.jpg)
 
 The current message is displayed at the top of the screen.
 
-![Map Preview](resources\static\message-view-readme.jpg)
+![Map Preview](resources/static/message-view-readme.jpg)
 
 Settlement, roads and towns. Roads are ful line, settlements are spots and towns are bigger spots.
 
-![Map Preview](resources\static\spots-and-edges-readme.jpg)
-![Map Preview](resources\static\town-readme.jpg)
+![Map Preview](resources/static/spots-and-edges-readme.jpg)
+![Map Preview](resources/static/town-readme.jpg)
 
 ## Rules
 
@@ -122,7 +122,7 @@ At the beginning of the game, each player enters their name and selects a color.
 Players are added by clicking the "Add Player" button.
 It is also possible to remove a player by clicking the "x" next to their name in the player table.
 Once all players have been added, the game starts by pressing the "Start Game" button.
-![Map Preview](resources\static\player-add-readme.jpg)
+![Map Preview](resources/static/player-add-readme.jpg)
 
 When the "Start Game" button is pressed, the game moves to the initial resource placement phase.
 At the start of the game, each player has the right to place two settlements and two roads.
@@ -141,20 +141,20 @@ If players are Player1, Player2, and Player3:\
 Players will see whose turn it is in the game message area.
 For example, if player Nenad is on turn, the message will show:
 
-![Map Preview](resources\static\nenad-readme.jpg)
+![Map Preview](resources/static/nenad-readme.jpg)
 
 If Player "Nenad" selects a spot during the second initial phase, 
 he will receive resources from the adjacent edges.
 
-![Map Preview](resources\static\example-initial-spot.jpg)
+![Map Preview](resources/static/example-initial-spot.jpg)
 
 For example, he will receive the following resources:
 
-![Map Preview](resources\static\example-initial-hand.jpg)
+![Map Preview](resources/static/example-initial-hand.jpg)
 
 When this process finishes, the player should see the following on the game screen:
 
-![Map Preview](resources\static\game-view-start-readme.jpg)
+![Map Preview](resources/static/game-view-start-readme.jpg)
 
 - At the top, the player can see who's turn it is.
 - In the center, the map is displayed.
@@ -166,7 +166,7 @@ Each number corresponds to a specific area.
 If a player’s settlement is located on the border of an area with that number,
 that player receives the resource from that area
 
-![Map Preview](resources\static\player-nenad-first-iteration.jpg)
+![Map Preview](resources/static/player-nenad-first-iteration.jpg)
 
 In the example image above, the player received the number 3.
 Since their settlement is on an area rich in wool with the number 3, they receive the wool resource in their hand.
