@@ -496,8 +496,10 @@
                        -fx-font-size: 16px;
                        -fx-font-weight: bold;
                        "}
-              {:fx/type :h-box
-               :spacing 10
+              {:fx/type :flow-pane
+               :hgap 10
+               :vgap 10
+               :alignment :center
                :children [(card "wood" "resource")
                           (card "brick" "resource")
                           (card "wool" "resource")
@@ -515,8 +517,10 @@
                        -fx-font-size: 16px;
                        -fx-font-weight: bold;
                        "}
-              {:fx/type :h-box
-               :spacing 10
+              {:fx/type :flow-pane
+               :hgap 10
+               :vgap 10
+               :alignment :center
                :children [(card "wood" "resource")
                           (card "brick" "resource")
                           (card "wool" "resource")
@@ -650,12 +654,6 @@
                                            {:fx/type :label
                                             :style "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"
                                             :text (:game-massage @*state)}]}
-                         :left {:fx/type   :v-box
-                                :padding   10
-                                :alignment :top-left
-                                :children  [{:fx/type   :button
-                                             :text      "Exit from the game"
-                                             :on-action {:event/type :start-game-view}}]}
 
                          :right {:fx/type :scroll-pane
                                  :fit-to-width true
