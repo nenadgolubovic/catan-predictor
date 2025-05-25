@@ -146,12 +146,6 @@
                                                   :text    (:game-massage @*state)
                                                   :style   "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"}]}
                                     {:fx/type   :h-box
-                                     :alignment :top-left
-                                     :padding   10
-                                     :children  [{:fx/type   :button
-                                                  :text      "Exit from the game"
-                                                  :on-action {:event/type :start-game-view}}]}
-                                    {:fx/type   :h-box
                                      :alignment :center-right
                                      :children  [{:fx/type   :v-box
                                                   :alignment :center
