@@ -77,7 +77,7 @@ Sa desne strane se nalazi tabela.
 
 On the right side, there is a table. Below the table, there are buttons.
 
-![Map Preview](resources\static\dice-button-readme.jpg)
+![Map Preview](resources/static/dice-button-readme.jpg)
 
 ![Map Preview](resources\static\buy-card-readme.jpg)
 ![Map Preview](resources\static\buy-dev-card-readme.jpg)
