@@ -1,7 +1,5 @@
 (ns catan-predictor.visualization-elements
-  (:require
-            [catan-predictor.spots :as spots]
-            [catan-predictor.visualization-services :as services]
+  (:require [catan-predictor.visualization-services :as services]
 
             )
   (:import [javafx.scene.layout Background BackgroundImage BackgroundPosition BackgroundRepeat BackgroundSize]
@@ -219,7 +217,7 @@
         image (Image. image-path)
         pattern (ImagePattern. image)]
     {:fx/type :polygon
-     :points (vec (map #(* 100 %) (vec (apply concat (spots/spots [x1 x2] [0 1 2 3 4 5])))))
+     :points (vec (map #(* 100 %) (vec (apply concat (services/spots [x1 x2] [0 1 2 3 4 5])))))
      :fill pattern
      :stroke "black"
      :stroke-width 1

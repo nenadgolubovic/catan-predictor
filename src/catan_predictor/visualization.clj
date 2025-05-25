@@ -1,12 +1,6 @@
 (ns catan-predictor.visualization
-  (:require [catan-predictor.shop :as shop]
-            [cljfx.api :as fx]
+  (:require [cljfx.api :as fx]
             [catan-predictor.utils :as utils]
-            [catan-predictor.spots :as spots]
-            [catan-predictor.roads :as roads]
-            [catan-predictor.area :as area]
-            [catan-predictor.centers :as centers]
-            [catan-predictor.shop :as shop]
             [catan-predictor.visualization-elements :as elem]
             [catan-predictor.visualization-services :as services]
             )
@@ -49,14 +43,14 @@
                        :initial-info "INITIAL PHASE OF GAME, PLEASE SELECT YOUR INITIAL SETTLEMENTS"
                        :players []
                        :players-count 0
-                       :spots (map #(elem/create-spot-view (first %) (second %)) (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))))
+                       :spots (map #(elem/create-spot-view (first %) (second %)) (services/make-spots-from-centers (services/make-centers (services/make-ring-area-centers 0.0 0.0 1.732))))
                        :booked-spots []
                        :booked-roads []
                        :roads (map #(elem/create-line-view (first (first %))
                                                       (second (first %))
                                                       (first (second %))
-                                                      (second (second %))) (roads/roads (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))))
-                       :areas (vec (area/create-areas-from-centers (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))) (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732))
+                                                      (second (second %))) (services/roads (services/make-spots-from-centers (services/make-centers (services/make-ring-area-centers 0.0 0.0 1.732)))))
+                       :areas (vec (services/create-areas-from-centers (services/make-spots-from-centers (services/make-centers (services/make-ring-area-centers 0.0 0.0 1.732))) (services/make-centers (services/make-ring-area-centers 0.0 0.0 1.732))
                                                                    (atom ["wool" "wool" "wool" "wool"
                                                                           "brick" "brick" "brick"
                                                                           "wood" "wood" "wood" "wood"
@@ -370,7 +364,7 @@
     :spots-click
     (let [coords (:spot-coordinates event)
           booked-spots (:booked-spots @*state)
-          all-spots (spots/make-spots-from-centers (centers/make-centers (centers/make-ring-area-centers 0.0 0.0 1.732)))
+          all-spots (services/make-spots-from-centers (services/make-centers (services/make-ring-area-centers 0.0 0.0 1.732)))
           near-spots (filter #(= 1.0 (utils/distance-1-2 % coords)) all-spots)
           phase (:phase @*state)
           areas (:areas @*state)]

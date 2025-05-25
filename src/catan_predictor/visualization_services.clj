@@ -1,9 +1,112 @@
 (ns catan-predictor.visualization-services
-  (:require [catan-predictor.shop :as shop]
-            [catan-predictor.shop :as shop]
+  (:require [catan-predictor.utils :as utils]))
 
-            )
-)
+
+
+(defn roads
+  [points]
+  "Def pairs of spots which make a road, distance is 1 between 2 spots always"
+  (mapcat (fn [n1]
+            (map (fn [n2] [n1 n2]) (filter #(= 1.000 (utils/distance-1-2 n1 %)) points)))
+          points))
+(defn make-ring-area-centers
+  [x y r]
+  "This function calculate centers of hexagons on ring"
+  (distinct
+    (utils/round-seq
+      (map (fn [k]
+             [(+ x (* r (utils/fcos1 k))) (+ y (* r (utils/fsin1 k)))]) [0 1 2 3 4 5]
+           ) 3))
+  )
+(defn make-centers
+  [points]
+  "This function make centers for full board"
+  (distinct
+    (utils/round-seq
+      (mapcat #(make-ring-area-centers (first %) (second %) 1.732) points)
+      3))
+  )
+(defn spots [[x y] ks]
+  "I will make function which make hexagon area"
+  (distinct
+    (utils/round-seq
+      (map (fn [k]
+             [(+ x (utils/fcos k)) (+ y (utils/fsin k))])
+           ks) 3)))
+(defn make-spots-from-centers
+  [centers]
+  "This function makes spots of hexagons from provided centers"
+  (distinct
+    (utils/round-seq
+      (mapcat #(spots [(first %) (second %)] [0 1 2 3 4 5])
+              centers)
+      3)))
+(defn remove-card
+  [cards-type hand]
+  "Select type of cards and delete one from hand"
+  (let [hand (vec hand)
+        index (some #(when (= (second %) cards-type) (first %))
+                    (map-indexed vector hand))]
+    (if index
+      (vec (concat (subvec hand 0 index) (subvec hand (inc index))))
+      hand)))
+(defn remove-n-cards
+  [type-card hand n]
+  (loop [hand hand
+         n n]
+    (if (< 0 n)
+      (recur (remove-card type-card hand) (dec n))
+      hand)))
+(defn buy-settlement [hand]
+  (remove-n-cards "wood" (remove-n-cards "brick" (remove-n-cards "wool" (remove-n-cards "grain" hand 1) 1) 1) 1) )
+(defn buy-town
+  [hand]
+  (remove-n-cards "ore" (remove-n-cards "grain" hand 2) 3))
+(defn buy-road
+  [hand]
+  (remove-n-cards "wood" (remove-n-cards "brick" hand 1) 1))
+(defn buy-development-card
+  [hand]
+  (remove-n-cards "grain" (remove-n-cards "ore" (remove-n-cards "wool" hand 1) 1) 1))
+(defn remove-once
+  [item coll]
+  "split collection on before(all before item appear) and after (from first appear item to end of collection)
+  fn doing concatenation of before and after without of first item in coll after"
+  (let [[before after] (split-with #(not= % item) coll)]
+    (concat before (rest after))))
+(defn create-area [center points resources numbers]
+  "make area map with center (coordinate of centers)
+  resource (resource of area)
+  spots (all spots connected with that area)
+  number (dice number which provide resource)"
+  (let [center center
+        resource (rand-nth @resources)
+        number (if (= "dust" resource)
+                 nil
+                 (rand-nth @numbers))
+
+        spots (filter #(= 1.000 (utils/distance-1-2 [(first center) (second center)] [(first %) (second %)])) points)]
+    (swap! resources
+           (fn [res-list]
+             "delete from atom resource and bring back atom without resource"
+             (let [first-removed (remove-once resource res-list)]
+               first-removed)))
+    (swap! numbers
+           (fn [res-list]
+             "delete from atom resource and bring back atom without resource"
+             (let [first-removed (remove-once number res-list)]
+               first-removed)))
+    {:center center
+     :resource resource
+     :spots spots
+     :number number}))
+(defn create-areas-from-centers
+  [points centers resources numbers]
+  (map #(create-area % points resources numbers) centers))
+
+
+
+
 
 (defn coords-in-roads?
   [coords player-name state]
@@ -34,7 +137,7 @@
     (when (or (not game-phase)
               (coords-in-roads? coords (:name player) state))
       (try
-        (swap! state update-in [:players player-idx :hand] shop/buy-settlement)
+        (swap! state update-in [:players player-idx :hand] buy-settlement)
         (catch Exception e
           (swap! state assoc :game-massage e)))
 
@@ -64,7 +167,7 @@
     (if (some #(= coords %) (:settlement player))
       (do
         (try
-          (swap! state update-in [:players player-idx :hand] shop/buy-town)
+          (swap! state update-in [:players player-idx :hand] buy-town)
           (catch Exception e
             (println "No resource")))
         (try
@@ -104,7 +207,7 @@
                    (coords-in-last-settlement? coords (:name player) state)))
       (when game-phase
         (try
-          (swap! state update-in [:players player-idx :hand] shop/buy-road)
+          (swap! state update-in [:players player-idx :hand] buy-road)
           (catch Exception e
             (swap! state assoc :game-massage e))))
 
@@ -178,9 +281,9 @@
 (defn take-development-card [state]
   (let [player-idx (dec (:player-turn @state))
         chosen (rand-nth (:development-deck @state))]
-    (swap! state update :development-deck #(shop/remove-card chosen %))
+    (swap! state update :development-deck #(remove-card chosen %))
     (swap! state update-in [:players player-idx :dev-cards] #(conj % chosen))
-    (swap! state update-in [:players player-idx :hand] shop/buy-development-card)
+    (swap! state update-in [:players player-idx :hand] buy-development-card)
     (println "Chosen card:" chosen)))
 (defn add-edge
   [graph node neighbor]

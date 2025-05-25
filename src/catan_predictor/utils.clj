@@ -32,23 +32,10 @@
   "calculate sin of k*PI/3"
   (math-round (m/sin (* m/PI (/ k 3))) 5))
 
-
-
-
 (defn round-seq
   [seq n]
   "Round sequence on n decimals"
   (map (fn [[x y]] [(math-round x 3) (math-round y n)]) seq))
-
-
-(defn distance
-  [x y decimals]
-  "Distance from center 0.0 0.0
-  x-> x axis value
-  y-> y axis value
-  decimals -> round on decimals"
-  (let [dist (m/sqrt (+ (m/pow x 2) (m/pow y 2)))]
-    (math-round dist decimals)))
 
 (defn distance-1-2
   [[x1 y1] [x2 y2]]
