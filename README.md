@@ -113,6 +113,82 @@ Settlement, roads and towns. Roads are ful line, settlements are spots and towns
 ![Map Preview](resources/static/spots-and-edges-readme.jpg)
 ![Map Preview](resources/static/town-readme.jpg)
 
+### Cards
+
+#### Numbers
+
+![Map Preview](resources/static/numbers-readme.jpg)
+
+#### Resources
+
+##### Forests - Produce Wood
+
+![Map Preview](resources/static/area-wood-readme.jpg)
+
+##### Hills - produce Brick
+
+![Map Preview](resources/static/area-brick-readme.jpg)
+
+##### Pasture - Produce Wool
+
+![Map Preview](resources/static/area-wool-readme.jpg)
+
+##### Mountains - Produce Ore
+
+![Map Preview](resources/static/area-ore-readme.jpg)
+
+##### Fields - Produce Grain
+
+![Map Preview](resources/static/area-grain-readme.jpg)
+
+##### Desert - Produces Nothing
+
+![Map Preview](resources/static/area-dust-readme.jpg)
+
+##### Wood
+
+![Map Preview](resources/static/resource-wood-readme.jpg)
+
+##### Brick
+
+![Map Preview](resources/static/resource-brick-readme.jpg)
+
+##### Wool
+
+![Map Preview](resources/static/resource-wool-readme.jpg)
+
+##### Grain
+
+![Map Preview](resources/static/resource-grain-readme.jpg)
+
+##### Ore
+
+![Map Preview](resources/static/resource-ore-readme.jpg)
+
+#### Development Cards
+
+##### Knight 
+
+![Map Preview](resources/static/dev-knight-readme.jpg)
+
+This card, when activated, allows the player to relocate the thief figure to any desired area.
+
+##### Road building
+
+![Map Preview](resources/static/dev-road-building-readme.jpg)
+
+"This card, when activated, grants the player the ability to build two roads."
+
+##### Victory point
+
+![Map Preview](resources/static/dev-victory-point-readme.jpg)
+
+The card is not activated. When a player draws this card, they automatically receive one victory point.
+
+
+#### Areas
+
+
 ## Rules
 
 
@@ -134,7 +210,7 @@ Once all players have placed their first settlements and roads, the game enters 
 phase.
 - When a player places a settlement on a spot during this second phase, they receive resources from the areas surrounding that spot.
 Example:
-If players are Player1, Player2, and Player3:\
+If players are Player1, Player2, and Player3
 - In the first initial phase, Player1 places settlement and road first, then Player2, then Player3.
 - In the second initial phase, Player3 places settlement and road first, then Player2, then Player1.
 
