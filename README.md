@@ -469,8 +469,23 @@ the creation of new and diverse game maps, and the introduction of additional ex
 There are also plans to develop both web and mobile applications to make the game more accessible. Furthermore,
 new development cards will be added to offer players even more strategic options.
 
-## Sources
-https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf
+## Literature
+[1] *Catan Rules*, available at: [https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf](https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf), last accessed on May 25, 2025.
+
+[2] Higginbotham, D. (2015). *Clojure for Brave and True*. No Starch Press, Inc., San Francisco, USA.
+
+[3] *Graphs and DFS Algorithm*, available at: [https://dnaeon.github.io/graphs-and-clojure/](https://dnaeon.github.io/graphs-and-clojure/), last accessed on May 23, 2025.
+
+[4] *Cljfx Library Documentation*, available at: [https://github.com/cljfx/cljfx](https://github.com/cljfx/cljfx), last accessed on May 24, 2025.
+
+[5] *JavaFX Documentation*, available at: [https://openjfx.io/](https://openjfx.io/), last accessed on May 16, 2025.
+
+[6] *ClojureScript – Testing*, available at: [https://clojurescript.org/tools/testing](https://clojurescript.org/tools/testing)
+
+[7] *Catan Universe*, guide and game view.
+
+[8] Images of areas, maps, and elements taken from: [https://www.pinterest.com/](https://www.pinterest.com/), last accessed on May 16, 2025.
+
 ## License
 
 Copyright © 2025 FIXME
