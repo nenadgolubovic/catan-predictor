@@ -71,48 +71,49 @@ There is also a table displaying the current players and a "Start Game" button t
 
 ![Map Preview](resources/static/start-game-view.jpg)
 
-On the right side, there is a table.
+### View Elements in Game
 
-![Map Preview](resources/static/table-readme.jpg)
-
-Below the table, there are buttons.
-
-![Map Preview](resources/static/dice-button-readme.jpg)
-
-![Map Preview](resources/static/buy-card-readme.jpg)
-![Map Preview](resources/static/buy-dev-card-readme.jpg)
-![Map Preview](resources/static/buy-road-readme.jpg)
-![Map Preview](resources/static/buy-settlement-readme.jpg)
-![Map Preview](resources/static/buy-town-readme.jpg)
-![Map Preview](resources/static/end-turn-readme.jpg)
-
-There are also two different views available: 
-one for displaying dice results, 
-
-![Map Preview](resources/static/dice-view-readme.jpg)
-
-and another for the development card hand, which includes an "Activate" button
-for activating cards.
-
-![Map Preview](resources/static/dev-cards-readme.jpg)
-
-At the bottom of the screen, there is also a hand showing the player's resources.
-
-![Map Preview](resources/static/hand-readme.jpg)
-
-The game includes a shop feature.
-
-![Map Preview](resources/static/shop-readme.jpg)
-
-The current message is displayed at the top of the screen.
-
-![Map Preview](resources/static/message-view-readme.jpg)
-
-Settlement, roads and towns. Roads are full line, settlements are spots and towns are bigger spots.
-
-![Map Preview](resources/static/spots-and-edges-readme.jpg)
-![Map Preview](resources/static/town-readme.jpg)
-
+<table>
+  <tr>
+    <td><strong>Table</strong><br>
+      <img src="resources/static/table-readme.jpg" alt="Game table on the right" width="200">
+    </td>
+    <td><strong>Buttons</strong><br>
+      <img src="resources/static/dice-button-readme.jpg" alt="Dice button" width="100">
+      <img src="resources/static/buy-card-readme.jpg" alt="Buy card button" width="100"><br>
+      <img src="resources/static/buy-dev-card-readme.jpg" alt="Buy dev card button" width="100">
+      <img src="resources/static/buy-road-readme.jpg" alt="Buy road button" width="100"><br>
+      <img src="resources/static/buy-settlement-readme.jpg" alt="Buy settlement button" width="100">
+      <img src="resources/static/buy-town-readme.jpg" alt="Buy town button" width="100">
+      <img src="resources/static/end-turn-readme.jpg" alt="End turn button" width="100">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Dice Result View</strong><br>
+      <img src="resources/static/dice-view-readme.jpg" alt="Dice view" width="200">
+    </td>
+    <td><strong>Development Card View</strong><br>
+      <img src="resources/static/dev-cards-readme.jpg" alt="Development cards view" width="200">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Player's Resource Hand</strong><br>
+      <img src="resources/static/hand-readme.jpg" alt="Player hand" width="200">
+    </td>
+    <td><strong>Shop</strong><br>
+      <img src="resources/static/shop-readme.jpg" alt="Shop interface" width="200">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Top Message Display</strong><br>
+      <img src="resources/static/message-view-readme.jpg" alt="Message display" width="200">
+    </td>
+    <td><strong>Settlements, Roads, and Towns</strong><br>
+      <img src="resources/static/spots-and-edges-readme.jpg" alt="Spots and edges" width="100">
+      <img src="resources/static/town-readme.jpg" alt="Town view" width="100">
+    </td>
+  </tr>
+</table>
 
 ### Asset
 
