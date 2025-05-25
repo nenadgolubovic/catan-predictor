@@ -472,19 +472,21 @@ new development cards will be added to offer players even more strategic options
 ## Literature
 [1] *Catan Rules*, available at: [https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf](https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf), last accessed on May 25, 2025.
 
-[2] Higginbotham, D. (2015). *Clojure for Brave and True*. No Starch Press, Inc., San Francisco, USA.
+[2] *Catan Universe*, guide and game view, available at: [https://catanuniverse.com/](https://catanuniverse.com/)
 
-[3] *Graphs and DFS Algorithm*, available at: [https://dnaeon.github.io/graphs-and-clojure/](https://dnaeon.github.io/graphs-and-clojure/), last accessed on May 23, 2025.
+[3] Higginbotham, D. (2015). *Clojure for Brave and True*. No Starch Press, Inc., San Francisco, USA.
 
 [4] *Cljfx Library Documentation*, available at: [https://github.com/cljfx/cljfx](https://github.com/cljfx/cljfx), last accessed on May 24, 2025.
 
 [5] *JavaFX Documentation*, available at: [https://openjfx.io/](https://openjfx.io/), last accessed on May 16, 2025.
 
+[6] Images of areas, maps, and elements taken from: [https://www.pinterest.com/](https://www.pinterest.com/), last accessed on May 16, 2025.
+
+[7] *Graphs and DFS Algorithm*, available at: [https://dnaeon.github.io/graphs-and-clojure/](https://dnaeon.github.io/graphs-and-clojure/), last accessed on May 23, 2025.
+
+
+
 [6] *ClojureScript – Testing*, available at: [https://clojurescript.org/tools/testing](https://clojurescript.org/tools/testing)
-
-[7] *Catan Universe*, guide and game view.
-
-[8] Images of areas, maps, and elements taken from: [https://www.pinterest.com/](https://www.pinterest.com/), last accessed on May 16, 2025.
 
 ## License
 

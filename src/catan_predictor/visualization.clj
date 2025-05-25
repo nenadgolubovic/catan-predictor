@@ -15,7 +15,11 @@
            [javafx.scene.image Image]
            [javafx.stage Screen]))
 
-
+;; ============================================================================
+;; This project is based on the board game Catan [1] [2].
+;; Clojure code function based on book [3]
+;; Game based on cljfx library for making GUI [4] [5]
+;; ============================================================================
 
 (defn create-spot-view [x y]
   {:fx/type          :circle
@@ -36,7 +40,8 @@
    :stroke-width     10
    :on-mouse-clicked {:event/type       :roads-click
                       :road-coordinates [[x1 y1] [x2 y2]]}})
-(defonce *state (atom {:dice-1      2
+(defonce *state
+         (atom {:dice-1      2
                        :dice-2      2
                        :player-turn 1
                        :town-build false
@@ -85,7 +90,7 @@
                                           "road-building" "road-building"
                                           ]
                        }))
-;Start of game elements:
+
 (defn background-image []
   (Background.
     (into-array BackgroundImage
@@ -918,6 +923,7 @@
     []
     paths))
 (defn longest-route-length
+  "Based on DFS algorithm and graphs teory [7] "
   [roads]
   (let [graph (build-graph roads)
         nodes (keys graph)
