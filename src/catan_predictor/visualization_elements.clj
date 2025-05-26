@@ -9,34 +9,62 @@
            [javafx.scene.image Image]))
 
 (defn create-spot-view [x y]
-  {:fx/type          :circle
-   :center-x         (* 100 x)
-   :center-y         (* 100 y)
-   :radius           10
-   :fill             (Color/rgb 210 191 145)
-   :on-mouse-clicked {:event/type       :spots-click
-                      :spot-coordinates [x y]}
+  "Create view of circle on gui cljfx with radius 10 and center of circle on gui on position x = x*100 y = y*100
+  Args:
+  -x: x axis value of center of circle
+  -y: y axis value of center of circle"
+  {:fx/type          :circle                                ;type of component is circle
+   :center-x         (* 100 x)                              ;center of x are multiply by 100 to be readable on screen
+   :center-y         (* 100 y)                              ;center of x are multiply by 100 to be readable on screen
+   :radius           10                                     ;radius of circle is 10
+   :fill             (Color/rgb 210 191 145)                ;filling circle with color rgb = 210,191,145
+   :on-mouse-clicked {:event/type       :spots-click        ;when click on spot with mouse, activate :spot-click event
+                      :spot-coordinates [x y]}              ;pass x y, this is important to event function :spot-click know which spots is clicked
    })
-(defn create-line-view [x1 y1 x2 y2]
-  {:fx/type          :line
-   :start-x          (* 100 x1)
-   :start-y          (* 100 y1)
-   :end-x            (* 100 x2)
-   :end-y            (* 100 y2)
-   :stroke (Color/rgb 210 180 140)
-   :stroke-width     10
-   :on-mouse-clicked {:event/type       :roads-click
-                      :road-coordinates [[x1 y1] [x2 y2]]}})
+(defn create-line-view
+  "Create view of line on gui cljfx with stroke 10px, line connect 2 spots x1 = x1*100 x2 = x2*100 y1 = y1*100 y2 = y2*100
+    Args:
+    -x1: x axis value of first spot
+    -y1: y axis value of first spot
+    -x2: x axis value of second spot
+    -y2: y axis value of second spot"
+  [x1 y1 x2 y2]
+  {:fx/type          :line                                  ;type of view is line
+   :start-x          (* 100 x1)                             ;first spot - x value
+   :start-y          (* 100 y1)                             ;first spot - y value
+   :end-x            (* 100 x2)                             ;first spot - x value
+   :end-y            (* 100 y2)                             ;second spot - y value
+   :stroke (Color/rgb 210 180 140)                          ;color of line is rgb = 210,180,140
+   :stroke-width     10                                     ;width of line is 10
+   :on-mouse-clicked {:event/type       :roads-click        ;activate function :roads-click
+                      :road-coordinates [[x1 y1] [x2 y2]]}});save clicked coordinates of line, important to pass to function :roads-click know what is clicked
+
+
 (defn background-image []
-  (Background.
-    (into-array BackgroundImage
-                [(BackgroundImage.
-                   (Image. "file:resources/static/start-manu-background.jpg")
-                   BackgroundRepeat/NO_REPEAT
-                   BackgroundRepeat/NO_REPEAT
-                   BackgroundPosition/CENTER
-                   (BackgroundSize. 1000 1000 true true true false))])))
+  "Create and get Background which contain background image,
+  Photo ar euploaded from local path resources/static/start-manu-background.jpg,
+  the background does not repeat and centralize
+
+  Args: no args"
+  (Background.                                              ;create new JavaFX Background
+    (into-array BackgroundImage                             ;convert BacgroundImage in Java array
+                [(BackgroundImage.                          ;Create new BackgroundImage object
+                   (Image. "file:resources/static/start-manu-background.jpg") ;Upload Image as file from location resources/static/start-manu-background.jpg
+                   BackgroundRepeat/NO_REPEAT               ;no horizontal repeat
+                   BackgroundRepeat/NO_REPEAT               ;no vertically repeat
+                   BackgroundPosition/CENTER                ;Center Position
+                   (BackgroundSize. 100 100                 ;Image size is 100%*100%
+                                    true                    ;width as percentage not px (100%)
+                                    true                    ;height as Percentage not px(100%)
+                                    true                    ;contain
+                                    false))]))) ;  with options for proporcional scaling and contain
 (defn add-button [state]
+  "Button for adding player on Start Game Page
+  On Button is text Add Player and is visible if in input name is not nil or if input color is nil
+  The button has the function of adding a player to the game with a name and color that is passed to him via a label and dropdown field on the home page.
+
+  Args: state - state of game
+  "
   {:fx/type :button
    :text "Add Player"
    :style     "-fx-font-size: 20px;
@@ -46,14 +74,20 @@
                 -fx-padding: 10px 20px;
                 -fx-background-radius: 5px;
                 -fx-min-width: 200px;
-                -fx-min-height: 60px;"
-   :disable (or (clojure.string/blank? (:input-name @state))
+                -fx-min-height: 60px;"                      ;font size 20, bolded text, with background color #3F51B5, white text, vertical padding 10, horizontal padding 20, rounding radius 5x, width 200px and height 60px
+   :disable (or (clojure.string/blank? (:input-name @state)) ; button cannot be clicked if input-name of state is empty (nil) or if input color is nil
                 (nil? (:input-color @state)))
-   :on-action {:event/type :add}
+   :on-action {:event/type :add}                            ;if button has pressed, activate function :add from event-type
    })
 (defn remove-button [idx]
-  {:fx/type   :button
-   :text      "X"
+  "A button that has the function of deleting a player from the game.
+  Pressing the button with an x
+  on it deletes the player with the index ids from the game.
+
+  Args: idx - the index of the player I want to delete
+  "
+  {:fx/type   :button                                       ;type button
+   :text      "X"                                           ;x is text on button
    :style     "-fx-font-size: 10px;
                 -fx-font-weight: bold;
                 -fx-background-color: #3F51B5;
@@ -62,8 +96,9 @@
                 -fx-background-radius: 5px;
                 -fx-min-width: 20px;
                 -fx-min-height: 20px;"
-   :on-action {:event/type :remove
+   :on-action {:event/type :remove                          ;font size 20, bolded text, with background color #3F51B5, white text, vertical padding 10, horizontal padding 20, rounding radius 5px, width 20px and height 20px
                :index idx}})
+
 (defn player-list [state]
   {:fx/type :v-box
    :spacing 10
@@ -90,33 +125,43 @@
                       :style "-fx-pref-width: 150px;"}
                      (remove-button idx)]})
        (:players @state)))})
+
+
 (defn dices-button [state]
-  "Roll dice button"
-  (let [active? (get @state :dice-activate)
-        opacity (if active? 1.0 0.3)]
-    {:fx/type   :button
-     :alignment :center
-     :style     (str "-fx-background-color: transparent; -fx-opacity: " opacity ";")
-     :graphic   {:fx/type    :image-view
-                 :image      {:fx/type :image
-                              :url     "file:resources/static/dices.png"}
-                 :fit-width  350
-                 :fit-height 200}
-     :on-action {:event/type :dice-view}}))
+  "Roll dice button. Press of this button present rolling dice event
+
+  Args: state of game"
+
+  {:fx/type   :button
+   :alignment :center                                       ;alignment on center
+   :style     "-fx-background-color: transparent;"          ;transparent bacground of button
+   :graphic   {:fx/type    :image-view                      ;button is image-view, image which have function of button
+               :image      {:fx/type :image
+                            :url     "file:resources/static/dices.png"} ;url of dice image
+               :fit-width  350                              ;width 350
+               :fit-height 200}                             ;height 200
+   :on-action {:event/type :dice-view}})                    ;activate event :dice view
 (defn dice-views [state]
-  {:fx/type   :h-box
-   :alignment :center
+  "This function present dice view after rolling
+  present two dice one nears to second one in horizontal order,
+  depends of state of game present image of number on dice
+  In game numbers will be allocate randomly
+
+  Args: state - state of the game"
+
+  {:fx/type   :h-box                                        ;horizontal box
+   :alignment :center                                       ;in center align
    :children  [{:fx/type    :image-view
                 :fit-width  200
                 :fit-height 200
                 :image      {:fx/type :image
-                             :url     (services/get-dice-image-url (get @state :dice-1))}
-                :clip {:fx/type :rectangle
+                             :url     (services/get-dice-image-url (get @state :dice-1))} ; url
+                :clip {:fx/type :rectangle                  ;image will be cliped in polygon 200*200 with a radius of 40 in width and length
                        :width 200
                        :height 200
                        :arc-width 40
                        :arc-height 40}}
-               {:fx/type    :image-view
+               {:fx/type    :image-view                     ;same as above, just for second image
                 :fit-width  200
                 :fit-height 200
                 :image      {:fx/type :image
@@ -126,32 +171,52 @@
                        :height 200
                        :arc-width 40
                        :arc-height 40}}]})
-(defn name-input [state]
-  {:fx/type :text-field
-   :prompt-text "Enter name"
-   :text (:input-name @state)
-   :on-text-changed #(swap! state assoc :input-name %)})
-(defn spots-view [state]
-  {:fx/type     :group
-   :translate-x -250
-   :translate-y -100
-   :children (:spots @state)
+(defn name-input
+  "Input text field for entering name of player
+  When text is changed, state of game will get :input-name value same as inputed in textbox
+
+  Args: state - state of the game"
+  [state]
+  {:fx/type :text-field                                     ;type - text field
+   :prompt-text "Enter name"                                ;Text which is disappears when input something
+   :text (:input-name @state)                               ;when input something text automatically present current :input name of state
+   :on-text-changed #(swap! state assoc :input-name %)})    ;when change text :input-name of state will get value from text-field
+(defn spots-view
+  "Spot view present group of spots on GUI,
+  will get from state vector of spots
+
+  Args: state - state of the game"
+  [state]
+  {:fx/type     :group                                      ;type group
+   :translate-x -250                                        ;moved -250px on x axis to be readable and arranged with other elements
+   :translate-y -100                                        ;moved -100px on y axis to be readable and arranged with other elements
+   :children (:spots @state)                                ;get spots from current state of game
    })
-(defn roads-view [state]
-  {:fx/type     :group
-   :translate-x -250
-   :translate-y -100
-   :children (:roads @state)
+(defn roads-view
+  "Road view present group of roads (lines) on GUI,
+  will get from state vector of roads
+
+  Args: state - state of the game"
+  [state]
+
+  {:fx/type     :group                                      ;type group
+   :translate-x -250                                        ;moved -250px on x axis to be readable and arranged with other elements
+   :translate-y -100                                        ;moved -100px on y axis to be readable and arranged with other elements
+   :children (:roads @state)                                ;get spots from current state of game
    })
+
+
 (defn buy-settlement-button
+  "Present button for buying settlement\"
+  Args: No args"
   []
   {:fx/type   :button
-   :alignment :bottom-right
+   :alignment :bottom-right                                 ;bottom right position
    :text "Buy Settlement"
-   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
+   :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;" ;white text, background color #ff6666, radius of button is 10 and font size 16
    :padding   2
    :v-box/margin 2
-   :on-action {:event/type :buy-settlement-btn}
+   :on-action {:event/type :buy-settlement-btn}             ;active function buy-settlement-btn from event handler
    }
   )
 (defn buy-town-button

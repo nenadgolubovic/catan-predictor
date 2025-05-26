@@ -103,11 +103,6 @@
 (defn create-areas-from-centers
   [points centers resources numbers]
   (map #(create-area % points resources numbers) centers))
-
-
-
-
-
 (defn coords-in-roads?
   [coords player-name state]
   (let [roads (:roads (first (filter #(= (:name %) player-name) (:players @state))))]

@@ -13,6 +13,8 @@ To enjoy the board game catan you need to download the project and run the follo
 
 After executing the command, an interactive GUI will open.
 
+It is recommended to run the application on a display resolution 2560 x 1440 so that all elements can be seen clearly.
+
 # Game 
 ### Games component
 - 19 area hexes

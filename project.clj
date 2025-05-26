@@ -7,7 +7,9 @@
                  [org.clojure/clojure "1.11.1"]
                  [seesaw "1.5.0"]
                  [cljfx "1.9.5"]
+                 [midje "1.10.10"]
                  ]
+  :plugins [[lein-midje "3.2.1"]]
   :main ^:skip-aot catan-predictor.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
