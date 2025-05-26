@@ -24,10 +24,10 @@
 (defn create-line-view
   "Create view of line on gui cljfx with stroke 10px, line connect 2 spots x1 = x1*100 x2 = x2*100 y1 = y1*100 y2 = y2*100
     Args:
-    -x1: x axis value of first spot
-    -y1: y axis value of first spot
-    -x2: x axis value of second spot
-    -y2: y axis value of second spot"
+    -x1: x-axis value of first spot
+    -y1: y-axis value of first spot
+    -x2: x-axis value of second spot
+    -y2: y-axis value of second spot"
   [x1 y1 x2 y2]
   {:fx/type          :line                                  ;type of view is line
    :start-x          (* 100 x1)                             ;first spot - x value
@@ -42,7 +42,7 @@
 
 (defn background-image []
   "Create and get Background which contain background image,
-  Photo ar euploaded from local path resources/static/start-manu-background.jpg,
+  Photo are uploaded from local path resources/static/start-manu-background.jpg,
   the background does not repeat and centralize
 
   Args: no args"
@@ -188,8 +188,8 @@
   Args: state - state of the game"
   [state]
   {:fx/type     :group                                      ;type group
-   :translate-x -250                                        ;moved -250px on x axis to be readable and arranged with other elements
-   :translate-y -100                                        ;moved -100px on y axis to be readable and arranged with other elements
+   :translate-x -250                                        ;moved -250px on x-axis to be readable and arranged with other elements
+   :translate-y -100                                        ;moved -100px on y-axis to be readable and arranged with other elements
    :children (:spots @state)                                ;get spots from current state of game
    })
 (defn roads-view
@@ -200,14 +200,12 @@
   [state]
 
   {:fx/type     :group                                      ;type group
-   :translate-x -250                                        ;moved -250px on x axis to be readable and arranged with other elements
-   :translate-y -100                                        ;moved -100px on y axis to be readable and arranged with other elements
+   :translate-x -250                                        ;moved -250px on x-axis to be readable and arranged with other elements
+   :translate-y -100                                        ;moved -100px on y-axis to be readable and arranged with other elements
    :children (:roads @state)                                ;get spots from current state of game
    })
-
-
 (defn buy-settlement-button
-  "Present button for buying settlement\"
+  "Present button for buying settlement
   Args: No args"
   []
   {:fx/type   :button
@@ -220,6 +218,8 @@
    }
   )
 (defn buy-town-button
+  "Present button for buying towns
+  Args: No args"
   []
   {:fx/type   :button
    :alignment :bottom-right
@@ -227,10 +227,12 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   2
    :v-box/margin 2
-   :on-action {:event/type :buy-town-btn}
+   :on-action {:event/type :buy-town-btn} ;active function buy-town-btn from event handler
    }
   )
 (defn buy-road-button
+  "Present button for buying roads
+  Args: No args"
   []
   {:fx/type   :button
    :alignment :bottom-right
@@ -238,10 +240,12 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   2
    :v-box/margin 2
-   :on-action {:event/type :buy-road-btn}
+   :on-action {:event/type :buy-road-btn} ;active function buy-road-btn from event handler
    }
   )
 (defn buy-dev-card-button
+  "Present button for buying development card
+  Args: No args"
   []
   {:fx/type   :button
    :alignment :bottom-right
@@ -249,10 +253,12 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   2
    :v-box/margin 2
-   :on-action {:event/type :buy-dev-card-btn}
+   :on-action {:event/type :buy-dev-card-btn} ;active function buy-dev-btn from event handler
    }
   )
 (defn buy-card-button
+  "Present button for buying cards
+  Args: No args"
   []
   {:fx/type   :button
    :alignment :bottom-right
@@ -260,66 +266,103 @@
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   2
    :v-box/margin 2
-   :on-action {:event/type :buy-card-btn}
+   :on-action {:event/type :buy-card-btn}                   ;activate function buy-card-btn from event-handler
    }
   )
 (defn exit-shop-button
+  "Present button for exiting from shops
+  Args: No args"
   []
   {:fx/type :button
    :text      "Exit from shop"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
-   :on-action {:event/type :exit-shop}
+   :on-action {:event/type :exit-shop}                      ;activate function exit-shop from event-handler
    })
 (defn activate-button
+  "Present button for activating development card
+  Args: No args"
   []
   {:fx/type :button
    :text      "Activate dev card"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
-   :on-action {:event/type :activate-dev-card}
+   :on-action {:event/type :activate-dev-card}  ;activate function activate-dev-card from event-handler
    })
-(defn hexagon [x1 x2 image]
-  (let [image-path (str "file:resources/static/area-" image ".jpg")
-        image (Image. image-path)
-        pattern (ImagePattern. image)]
-    {:fx/type :polygon
-     :points (vec (map #(* 100 %) (vec (apply concat (services/spots [x1 x2] [0 1 2 3 4 5])))))
-     :fill pattern
-     :stroke "black"
-     :stroke-width 1
+(defn hexagon
+  "Element on board which is hexagon, take image of area and present in hex shape
+  with border of roads and spots of board
+
+  Args:
+  x1 -  x-axis value of center of hexagon
+  y1 -  y-axis value of center of hexagon
+  image - name of image from resource"
+  [x y image]
+  (let [image-path (str "file:resources/static/area-" image ".jpg") ; path of image
+        image (Image. image-path)                           ;image object
+        pattern (ImagePattern. image)]                      ;Image pattern object
+    {:fx/type :polygon                                      ;type polygon
+     :points (vec (map #(* 100 %) (vec (apply concat (services/spots [x y] [0 1 2 3 4 5]))))) ;service/spots will make from spots which is defined hex, apply concat flat all of this spot, and vec put all of that to one vector, all of them are multiplied by 100 to be readable on board, and all of them will be brought as vector
+     :fill pattern                                          ;fill with pattern object
+     :stroke "black"                                        ;black stroke (border)
+     :stroke-width 1                                        ;width of stroke is 1, to not be visible on board, because roads and will be overlap that stroke
      }))
-(defn circle [x y image]
-  (let [image-name (if (nil? image) "pawn" image)
-        image-path (str "file:resources/static/" image-name ".jpg")
-        image (Image. image-path)
-        pattern (ImagePattern. image)]
-    {:fx/type :circle
+(defn circle
+  "Circle present circle on mid of hexagon, and will be filled by number image
+  Args:
+  x - x-axis value
+  y - y-axis value
+  image - image which will be presented
+  "
+  [x y image]
+  (let [image-name (if (nil? image) "pawn" image)           ;image name will image, if insted of image will be provided nil value, than image-name will be pawn
+        image-path (str "file:resources/static/" image-name ".jpg") ;path of image, takes standard resource path and image name
+        image (Image. image-path)                           ;image objet of taken image
+        pattern (ImagePattern. image)]                      ;pattern will be that image
+    {:fx/type :circle                                       ;type circle
      :center-x (* 100 x)
      :center-y (* 100 y)
      :radius 20
-     :fill pattern
-     :stroke "black"
+     :fill pattern                                          ;fill with image
+     :stroke "black"                                        ;black stroke
      :stroke-width 1
-     :on-mouse-clicked {:event/type :circle-click
-                        :center-coordinates [x y]}
+     :on-mouse-clicked {:event/type :circle-click           ;call function :circle-click from event-handler
+                        :center-coordinates [x y]}          ;provide coordinates which are pressed, important for game, because pawn could be moved if we press on some center
      }))
-(defn hexagon-with-circle [x y image circle-image]
+(defn hexagon-with-circle
+  "Make group of circles and hexes
+  Args:
+  x - x-axis value
+  y - y-axis value
+  image - image of area
+  circle-image - image of number"
+  [x y image circle-image]
   {:fx/type :group
-   :children [(hexagon x y image )
-              (circle x y circle-image)]})
-(defn generate-image-hex [state]
-  (let [areas (vec (:areas state))]
-    (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) areas)
+   :children [(hexagon x y image )                          ;passed hexagon function
+              (circle x y circle-image)]})                  ;passed circle function
+(defn generate-image-hex
+  "Generate images of hexes and generate board on game
+
+  Args: state - state of game"
+  [state]
+  (let [areas (vec (:areas state))]                         ;get all information of areas from state as vector
+    (map #(hexagon-with-circle (first (:center %)) (second (:center %)) (:resource %) (:number %)) areas) ;call hexagon-with-circle, for all areas take resource, number and center and pass to hexagon-with-circle function, because center is in shape [x y] x passed as first element of center and y as second
     ))
 (defn card
+  "Card view
+
+  Args:
+  resource - resource
+  type - type of card
+  state - state of the game
+  "
   [resource type state]
-  (let [image-path (str "file:resources/static/"type"-" resource ".jpg")
-        image (Image. image-path)
-        pattern (ImagePattern. image)
-        selected-resource (:clicked-resource @state)
-        width (if (= resource selected-resource) 100 80)
-        height (if (= resource selected-resource) 143 115)
-        arc-height (if (= resource selected-resource) 15 10)
-        arc-width (if (= resource selected-resource) 15 10)]
+  (let [image-path (str "file:resources/static/"type"-" resource ".jpg") ; image path, take standard path of all images, and name of images are in shape of type-resource
+        image (Image. image-path)                           ;make image Java object
+        pattern (ImagePattern. image)                       ;make ImagePatter Java object
+        selected-resource (:clicked-resource @state)        ;take clicked-resource from state
+        width (if (= resource selected-resource) 100 80)    ;if clicked-resource is same as passed resource change size of width
+        height (if (= resource selected-resource) 143 115)  ;if clicked-resource is same as passed resource change height of width
+        arc-height (if (= resource selected-resource) 15 10);if clicked-resource is same as passed resource change arc-height of width
+        arc-width (if (= resource selected-resource) 15 10)];if clicked-resource is same as passed resource change arc-width of width
 
     {:fx/type :rectangle
      :width width
@@ -329,14 +372,18 @@
      :fill pattern
      :stroke :gray
      :stroke-width 1
-     :on-mouse-clicked {:event/type :card-click
-                        :resource resource}
+     :on-mouse-clicked {:event/type :card-click             ;call card-click from event-handler, that should pass to state :clicked resource
+                        :resource resource}                 ;passed resource when card is clicked
      }))
-(defn shop-buy-card [state]
-  {:fx/type :v-box
+(defn shop-buy-card
+  "View of all cards in shop for buying
+
+  Args: state - state of the game"
+  [state]
+  {:fx/type :v-box                                          ;vertical box
    :spacing 10
    :alignment :center
-   :children [{:fx/type :label
+   :children [{:fx/type :label                              ;label of shop
                :text "PLEASE CHOOSE CARD WHICH YOU WANT TO BUY"
                :style "-fx-background-color: white;
                        -fx-background-radius: 5px;
@@ -344,16 +391,19 @@
                        -fx-font-size: 16px;
                        -fx-font-weight: bold;
                        "}
-              {:fx/type :flow-pane
-               :hgap 10
-               :vgap 10
+              {:fx/type :flow-pane                          ;type flow pane
+               :hgap 10                                     ;horizontal gap between cards
+               :vgap 10                                     ;vertical gap between cards
                :alignment :center
-               :children [(card "wood" "resource" state)
-                          (card "brick" "resource" state)
-                          (card "wool" "resource" state)
-                          (card "grain" "resource" state)
-                          (card "ore" "resource" state)]}]})
+               :children [(card "wood" "resource" state)    ;view of card of resource wood
+                          (card "brick" "resource" state)   ;view of card of resource brick
+                          (card "wool" "resource" state)    ;view of card of resource wool
+                          (card "grain" "resource" state)   ;view of card of resource grain
+                          (card "ore" "resource" state)]}]});view of card of resource ore
 (defn shop-sell-card [state]
+  "View of all cards in shop for buying
+
+  Args: state - state of the game"
   {:fx/type :v-box
    :spacing 10
    :alignment :center
@@ -369,12 +419,14 @@
                :hgap 10
                :vgap 10
                :alignment :center
-               :children [(card "wood" "resource" state)
+               :children [(card "wood" "resource" state)    ;all cards presented
                           (card "brick" "resource" state)
                           (card "wool" "resource" state)
                           (card "grain" "resource" state)
                           (card "ore" "resource" state)]}]})
+
 (defn buy-this-card-btn
+  ""
   []
   {:fx/type :button
    :text      "Buy this card"
