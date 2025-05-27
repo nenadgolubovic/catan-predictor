@@ -38,8 +38,6 @@
    :stroke-width     10                                     ;width of line is 10
    :on-mouse-clicked {:event/type       :roads-click        ;activate function :roads-click
                       :road-coordinates [[x1 y1] [x2 y2]]}});save clicked coordinates of line, important to pass to function :roads-click know what is clicked
-
-
 (defn background-image []
   "Create and get Background which contain background image,
   Photo are uploaded from local path resources/static/start-manu-background.jpg,
@@ -98,20 +96,26 @@
                 -fx-min-height: 20px;"
    :on-action {:event/type :remove                          ;font size 20, bolded text, with background color #3F51B5, white text, vertical padding 10, horizontal padding 20, rounding radius 5px, width 20px and height 20px
                :index idx}})
-
 (defn player-list [state]
-  {:fx/type :v-box
-   :spacing 10
-   :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
+  (defn player-list
+    "Generates a JavaFX VBox component that displays a list of players with their names, colors,
+    and a remove button for each entry.
+
+    Args:
+    state - state of the game
+    "
+    {:fx/type :v-box
+     :spacing 10
+     :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
    :children
    (concat
-     [{:fx/type :h-box
+     [{:fx/type :h-box                                      ;made header of table
        :style  "-fx-font-weight: bold; -fx-padding: 5;"
        :spacing 20
        :children [{:fx/type :label :text "Name" :style "-fx-pref-width: 150px;"}
                   {:fx/type :label :text "Color" :style "-fx-pref-width: 150px;"}
                   {:fx/type :label :text "Remove" :style "-fx-pref-width: 200px;"}]}]
-     (map-indexed
+     (map-indexed                                           ;received 2 parameters idx and collection, for all of from collection made one line with name, color and remove-button
        (fn [idx {:keys [name color]}]
          {:fx/type :h-box
           :spacing 20
@@ -124,9 +128,7 @@
                       :text color
                       :style "-fx-pref-width: 150px;"}
                      (remove-button idx)]})
-       (:players @state)))})
-
-
+       (:players @state)))}))
 (defn dices-button [state]
   "Roll dice button. Press of this button present rolling dice event
 
@@ -424,56 +426,78 @@
                           (card "wool" "resource" state)
                           (card "grain" "resource" state)
                           (card "ore" "resource" state)]}]})
-
 (defn buy-this-card-btn
-  ""
+  "Present button for give information to system that player want to buy selected card
+  Args: No args"
   []
   {:fx/type :button
    :text      "Buy this card"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
-   :on-action {:event/type :buy-this-card}})
+   :on-action {:event/type :buy-this-card}})                ; call activation function from event-handler :buy-this-card
 (defn sell-this-card-btn
+  "Present button for give information to system that player want to sell selected card
+  Args: No args"
   []
   {:fx/type :button
    :text      "Sell this card"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
-   :on-action {:event/type :sell-this-card}})
+   :on-action {:event/type :sell-this-card}})             ; call activation function from event-handler :sell-this-card
 (defn hand-view
+  "View which present hand of player (collection of resource)
+  Args:
+  cards - all resource from hand
+  state - state of the game"
   [cards state]
   {:fx/type :h-box
    :alignment :bottom-center
-   :children (vec (map #(card % "resource" state) cards))}
+   :children (vec (map #(card % "resource" state) cards))}  ;bring back vector of mapped cards argument with function card, present all resource from hand as card view
   )
 (defn hand-dev-view
+  "View which present development hand of player (collection of development cards)
+  Args:
+  cards - all resource from hand
+  state - state of the game"
   [cards state]
   {:fx/type :h-box
    :alignment :bottom-right
-   :children (vec (map #(card % "dev" state) cards))}
+   :children (vec (map #(card % "dev" state) cards))}       ; bring back mapped collection with function card, present all development card of player on turn in application
   )
-(defn image-group [state]
+(defn image-group
+  "Function which present board of table, collection of hexes spots and roads
+  Args: state - state of the game"
+  [state]
   {:fx/type     :group
    :translate-x -250
    :translate-y -100
-   :children (vec (generate-image-hex state))})
+   :children (vec (generate-image-hex state))})             ; back view of all hexes and spots and roads from state of the game
 (defn player-turn-info
-  [t]
+  "View of information which player is on turn
+  Args: player - player which is on turn"
+  [player]
   "label which provides information on whose turn it is"
   {:fx/type :label
-   :text (str "PLAYER TURN: " t)
+   :text (str "PLAYER TURN: " player)                       ; bring back text info of player
    :style "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"})
 (defn end-turn-btn
+  "Present button for give information to system that player want to buy end turn
+  Args: No args"
   []
   {:fx/type   :button
    :text      "End Turn"
    :style     "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
    :padding   2
    :v-box/margin 10
-   :on-action {:event/type :end-turn}
+   :on-action {:event/type :end-turn}                       ; call function from event-handler :end-turn
    })
 (defn table-info
+  "Creates a JavaFX VBox containing a styled table that displays player information.
+
+  Args:
+  -state - state of the game
+  "
   [state]
   {:fx/type :v-box
-   :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
+   :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);" ;dropshadow added shade effect
    :spacing 10
    :children
 
@@ -486,40 +510,41 @@
              -fx-selection-bar: #cce5ff;
              -fx-selection-bar-non-focused: #99ccff;"
      :items (vec (map (fn [player]
-                        {:player (:name player)
-                         :vp (or (:vp player) 0)
-                         :road-length (or (:road-length player) 0)
-                         :army-size (or (:army-size player) 0)
-                         :color (:color player)})
-                      (:players @state)))
+                        {:player (:name player)             ;take nape of players
+                         :vp (or (:vp player) 0)            ;take victory points of players or back 0 if is nil
+                         :road-length (or (:road-length player) 0) ;take road-length of all players or back 0 if is nil
+                         :army-size (or (:army-size player) 0) ; take army size of all or back 0 if is nil
+                         :color (:color player)})           ; take color of all
+                      (:players @state)))                   ; all info above is taken from :players map
      :columns [{:fx/type :table-column
                 :text "Player"
-                :cell-value-factory :player
+                :cell-value-factory :player                 ;cell is from :player info from items, one cell of one player
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Victory Points"
-                :cell-value-factory :vp
+                :cell-value-factory :vp                     ;cell is from :vp info from items
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Road Length"
-                :cell-value-factory :road-length
+                :cell-value-factory :road-length            ;cell is from :road-length info from items
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Army Size"
-                :cell-value-factory :army-size
+                :cell-value-factory :army-size              ;cell is from :army-size info from items
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}
                {:fx/type :table-column
                 :text "Color"
-                :cell-value-factory :color
+                :cell-value-factory :color                  ;cell is from :color info from items
                 :style "-fx-font-size: 20px; -fx-text-fill: black;"}]}]})
 (defn color-dropdown
+  "Function which present view of color choice on start game view"
   [state]
-  (let [all-colors ["red" "blue" "yellow" "green"]
-        used-colors (set (map :color (:players @state)))
-        available-colors (remove used-colors all-colors)]
-    {:fx/type :combo-box
-     :prompt-text "Choose color"
-     :value (:input-color @state)
-     :items (vec available-colors)
-     :on-value-changed #(swap! state assoc :input-color %) }))
+  (let [all-colors ["red" "blue" "yellow" "green"]          ; colors for selecting
+        used-colors (set (map :color (:players @state)))    ; create set of map all chosen color in game
+        available-colors (remove used-colors all-colors)]   ; deletes from the color set the one that has already been deleted and restores those that are still available
+    {:fx/type :combo-box                                    ; type combo box
+     :prompt-text "Choose color"                            ; Info on dropdown before selecting color information
+     :value (:input-color @state)                           ; take input color
+     :items (vec available-colors)                          ; items for selecting is only available-colors
+     :on-value-changed #(swap! state assoc :input-color %) })) ; put selected color as input color
 
