@@ -96,14 +96,15 @@
                 -fx-min-height: 20px;"
    :on-action {:event/type :remove                          ;font size 20, bolded text, with background color #3F51B5, white text, vertical padding 10, horizontal padding 20, rounding radius 5px, width 20px and height 20px
                :index idx}})
-(defn player-list [state]
-  (defn player-list
+(defn player-list
+
     "Generates a JavaFX VBox component that displays a list of players with their names, colors,
     and a remove button for each entry.
 
     Args:
     state - state of the game
     "
+  [state]
     {:fx/type :v-box
      :spacing 10
      :style "-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);"
@@ -128,7 +129,7 @@
                       :text color
                       :style "-fx-pref-width: 150px;"}
                      (remove-button idx)]})
-       (:players @state)))}))
+       (:players @state)))})
 (defn dices-button [state]
   "Roll dice button. Press of this button present rolling dice event
 
