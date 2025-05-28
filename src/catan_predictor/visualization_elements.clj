@@ -21,6 +21,19 @@
    :on-mouse-clicked {:event/type       :spots-click        ;when click on spot with mouse, activate :spot-click event
                       :spot-coordinates [x y]}              ;pass x y, this is important to event function :spot-click know which spots is clicked
    })
+(defn create-spot-view [x y]
+  "Create view of circle on gui cljfx with radius 10 and center of circle on gui on position x = x*100 y = y*100
+  Args:
+  -x: x axis value of center of circle
+  -y: y axis value of center of circle"
+  {:fx/type          :circle                                ;type of component is circle
+   :center-x         (* 100 x)                              ;center of x are multiply by 100 to be readable on screen
+   :center-y         (* 100 y)                              ;center of x are multiply by 100 to be readable on screen
+   :radius           10                                     ;radius of circle is 10
+   :fill             (Color/rgb 210 191 145)                ;filling circle with color rgb = 210,191,145
+   :on-mouse-clicked {:event/type       :spots-click        ;when click on spot with mouse, activate :spot-click event
+                      :spot-coordinates [x y]}              ;pass x y, this is important to event function :spot-click know which spots is clicked
+   })
 (defn create-line-view
   "Create view of line on gui cljfx with stroke 10px, line connect 2 spots x1 = x1*100 x2 = x2*100 y1 = y1*100 y2 = y2*100
     Args:
