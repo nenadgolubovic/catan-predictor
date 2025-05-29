@@ -4,11 +4,14 @@
 
 
 (defn roads
+  "Def pairs of spots which make a road, distance is 1 between 2 spots always
+  Args: points"
   [points]
-  "Def pairs of spots which make a road, distance is 1 between 2 spots always"
-  (mapcat (fn [n1]
-            (map (fn [n2] [n1 n2]) (filter #(= 1.000 (utils/distance-1-2 n1 %)) points)))
+  (mapcat (fn [n1]                                          ;mapcat for flattens  all pairs
+            (map (fn [n2] [n1 n2])                          ;for each n2 looking for n1 which is on distance 1.000 from n2
+                 (filter #(= 1.000 (utils/distance-1-2 n1 %)) points))) ;take all point (n1) from points and calculate distance of 1.000
           points))
+
 (defn make-ring-area-centers
   [x y r]
   "This function calculate centers of hexagons on ring"

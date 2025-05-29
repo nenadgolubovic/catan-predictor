@@ -333,7 +333,6 @@
         (:height result) => 115
         (:arc-height result) => 10
         (:arc-width result) => 10))
-
 (fact "buy-this-card-btn returns a button with correct text and event"
       (let [btn (buy-this-card-btn)]
         (:fx/type btn) => :button
