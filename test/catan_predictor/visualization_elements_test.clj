@@ -246,7 +246,18 @@
         (:text btn) => "Activate dev card"
         (:style btn) => "-fx-font-size: 16px; -fx-background-color: #ff6666; -fx-text-fill: white; -fx-background-radius: 10;"
         (:on-action btn) => {:event/type :activate-dev-card}))
-
+(fact "hexagon returns a polygon with correct image and 12 points"
+      (let [x 1
+            y 1
+            image "forest"
+            result (hexagon x y image)
+            points (:points result)]
+        (:fx/type result) => :polygon                       ;type is polygon?
+        (count (:points result)) => 12                      ;12 coordinates
+        (every? number? points) => truthy            ;each number are number
+        (:stroke result) => "black"                         ;existing stroke and fill
+        (:stroke-width result) => 1                         ;stroke width is 1
+        (instance? ImagePattern (:fill result)) => true))
 (fact "circle returns a circle with correct center, radius and fill"
       (let [result (circle 1 2 nil)
             fill (:fill result)]
@@ -396,3 +407,46 @@
         (:items view) => (just ["yellow" "green"] :in-any-order)   ; should contain colors not used ("yellow", "green")
         ((:on-value-changed view) "green")
         @state => (contains {:input-color "green"})))
+(fact "shop-buy-card returns a v-box with correct label and 5 cards"
+      (let [state (atom {:clicked-resource nil})
+            result (shop-buy-card state)
+            children (:children result)
+            label (first children)
+            flow-pane (second children)
+            card-children (:children flow-pane)]
+        (:fx/type result) => :v-box                         ;vbox check
+        (:spacing result) => 10
+        (:alignment result) => :center
+        (:fx/type label) => :label                          ; label check
+        (:text label) => "PLEASE CHOOSE CARD WHICH YOU WANT TO BUY"
+        (:fx/type flow-pane) => :flow-pane                  ;Flow-pane check
+        (:hgap flow-pane) => 10
+        (:vgap flow-pane) => 10
+        (:alignment flow-pane) => :center
+        (count card-children) => 5                          ;cards check does it 5
+        (every? #(= (:fx/type %) :rectangle) card-children) => true
+        (every? #(contains? (:on-mouse-clicked %) :resource) card-children) => true
+        (set (map #(get-in % [:on-mouse-clicked :resource]) card-children))
+        => #{"wood" "brick" "wool" "grain" "ore"}))         ;check does every card type resource
+(fact "shop-sell-card returns a v-box with correct label and 5 cards"
+      (let [state (atom {:clicked-resource nil})
+            result (shop-sell-card state)
+            children (:children result)
+            label (first children)
+            flow-pane (second children)
+            card-children (:children flow-pane)]
+        (:fx/type result) => :v-box                         ;vbox check
+        (:spacing result) => 10
+        (:alignment result) => :center
+        (:fx/type label) => :label                          ;label check
+        (:text label) => "PLEASE CHOOSE CARD WHICH YOU WANT TO SELL"
+        (:fx/type flow-pane) => :flow-pane
+        (:hgap flow-pane) => 10                             ;Flow-pane check
+        (:vgap flow-pane) => 10
+        (:alignment flow-pane) => :center
+        (count card-children) => 5                          ;cards check does it 5
+        (every? #(= (:fx/type %) :rectangle) card-children) => true
+        (every? #(contains? (:on-mouse-clicked %) :resource) card-children) => true
+        (set (map #(get-in % [:on-mouse-clicked :resource]) card-children))
+        => #{"wood" "brick" "wool" "grain" "ore"}))         ;check does every card type resource
+
