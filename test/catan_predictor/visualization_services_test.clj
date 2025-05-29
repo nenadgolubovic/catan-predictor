@@ -119,3 +119,65 @@
         (services/buy-development-card hand) => ["grain" "ore" "wool" "wood"] ; removes one grain, ore, wool
         (services/buy-development-card ["grain" "ore" "wool"]) => [] ; removes all if exactly one of each
         (services/buy-development-card ["grain" "ore" "wood"]) => ["wood"])) ; missing wool
+(fact "remove-once removes first occurrence of item from collection"
+      (services/remove-once "grain" ["wood" "grain" "grain" "ore"]) => ["wood" "grain" "ore"] ; removes first "grain"
+      (services/remove-once "brick" ["wood" "grain" "ore"]) => ["wood" "grain" "ore"] ; item not found, returns same
+      (services/remove-once "wood" ["wood" "grain" "wood"]) => ["grain" "wood"] ; removes first "wood"
+      (services/remove-once "ore" []) => [] ; empty collection returns empty
+      )
+(fact "create-area creates area map with correct keys and updates atoms"
+      (let [resources (atom ["wood" "grain" "dust"])
+            numbers (atom [5 8 10])
+            center [0 0]
+            points [[0 1] [1 0] [1 1] [2 2]]]
+        (let [area (services/create-area center points resources numbers)]
+          (:center area) => center                          ;if center is center of area
+          (contains? area :resource) => true                ;if is resource exist in area
+          (contains? area :number) => true                  ;if is number exist in area
+          (contains? area :spots) => true                   ;if is spots exist in area
+          (some #(= (:resource area) %) ["wood" "grain" "dust"]) => true ; if exist in area resource some wood grain dust..
+          (if (= (:resource area) "dust")                   ;if dust is resource return nil in number
+            (:number area) => nil
+            (some #(= (:number area) %) [5 8 10]) => true)
+          (not-any? #(= (:resource area) %) @resources) => true
+          (if (:number area) (not-any? #(= (:number area) %) @numbers) => true
+                             true))))
+(fact "create-areas-from-centers returns collection of areas with correct structure"
+      (let [resources (atom ["wood" "grain" "dust"])
+            numbers (atom [5 8 10])
+            points [[0 1] [1 0] [1 1] [2 2]]
+            centers [[0 0] [1 1] [2 2]]
+            areas (services/create-areas-from-centers points centers resources numbers)]
+        (count areas) => (count centers)
+        (every? map? areas) => true
+        (every? #(contains? % :center) areas) => true
+        (every? #(contains? % :resource) areas) => true
+        (every? #(contains? % :spots) areas) => true
+        (every? #(contains? % :number) areas) => true))
+(fact "coords-in-roads? returns true if coords are in player's roads, else nil"
+      (let [state (atom {:players [{:name "A"
+                                    :roads [[[0 0] [1 0]] [[2 2] [3 3]]]}
+                                   {:name "B"
+                                    :roads [[[4 4] [5 5]]]}]})]
+        (services/coords-in-roads? [0 0] "A" state) => true
+        (services/coords-in-roads? [1 0] "A" state) => true
+        (services/coords-in-roads? [2 2] "A" state) => true
+        (services/coords-in-roads? [3 3] "A" state) => true
+        (services/coords-in-roads? [5 5] "A" state) => nil
+        (services/coords-in-roads? [4 4] "B" state) => true
+        (services/coords-in-roads? [6 6] "B" state) => nil
+        (services/coords-in-roads? [0 0] "C" state) => nil))
+(fact "get-dice-image-url returns correct image URL for dice number"
+      (services/get-dice-image-url 2) => "file:resources/static/dice-2.png"
+      (services/get-dice-image-url 3) => "file:resources/static/dice-3.png"
+      (services/get-dice-image-url 6) => "file:resources/static/dice-6.png")
+(fact "player-turn-inc increments player index and resets to 1 after last player"
+      (services/player-turn-inc 1 4) => 2     ; after 1 go 2
+      (services/player-turn-inc  3 4) => 4     ; after 3 go 4
+      (services/player-turn-inc  4 4) => 1     ; after 4 go 1
+      (services/player-turn-inc  5 5) => 1     ; after 5, go 1
+      (services/player-turn-inc  2 5) => 3)
+(fact "player-turn-dec decreases player number by 1"
+      (services/player-turn-dec 3) => 2
+      (services/player-turn-dec 1) => 0
+      (services/player-turn-dec 10) => 9)

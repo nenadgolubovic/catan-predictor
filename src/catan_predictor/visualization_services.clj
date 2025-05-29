@@ -115,50 +115,74 @@
   Args: hand - collection of resource"
   [hand]
   (remove-n-cards "grain" (remove-n-cards "ore" (remove-n-cards "wool" hand 1) 1) 1))
-
-
-
 (defn remove-once
-  [item coll]
   "split collection on before(all before item appear) and after (from first appear item to end of collection)
-  fn doing concatenation of before and after without of first item in coll after"
+  fn doing concatenation of before and after without of first item in coll after
+
+  Args:
+    - item - item for remove
+    - coll - collection from where we want to delete item"
+  [item coll]
   (let [[before after] (split-with #(not= % item) coll)]
     (concat before (rest after))))
-(defn create-area [center points resources numbers]
+(defn create-area
   "make area map with center (coordinate of centers)
   resource (resource of area)
   spots (all spots connected with that area)
-  number (dice number which provide resource)"
+  number (dice number which provide resource)
+
+  Args:
+    - center  - coordinates of center of area
+    - points  - coordinates of spots of area (hexagon)
+    - resource  - resource which is area rich
+    - numbers - number which present that area"
+  [center points resources numbers]
   (let [center center
-        resource (rand-nth @resources)
+        resource (rand-nth @resources)                      ;resource is random of current atom resources, resource will be deleted after choosing, so have to be atom to can update
         number (if (= "dust" resource)
                  nil
-                 (rand-nth @numbers))
+                 (rand-nth @numbers))                       ;number is random of current atom numbers, numbers will be deleted after choosing, so have to be atom to can update
 
-        spots (filter #(= 1.000 (utils/distance-1-2 [(first center) (second center)] [(first %) (second %)])) points)]
+        spots (filter #(= 1.000 (utils/distance-1-2 [(first center) (second center)] [(first %) (second %)])) points)] ; spots is from provided points all points which is on distance 1 of center
     (swap! resources
            (fn [res-list]
              "delete from atom resource and bring back atom without resource"
              (let [first-removed (remove-once resource res-list)]
-               first-removed)))
+               first-removed)))                             ; when resource has chosen, it will be removed from resources atom
     (swap! numbers
            (fn [res-list]
              "delete from atom resource and bring back atom without resource"
-             (let [first-removed (remove-once number res-list)]
+             (let [first-removed (remove-once number res-list)]; when resource has chosen, it will be removed from numbers atom
                first-removed)))
-    {:center center
+    {:center   center
      :resource resource
-     :spots spots
-     :number number}))
+     :spots    spots
+     :number   number}                                      ;make map of center, resource, spot and number
+    ))
 (defn create-areas-from-centers
+  "Create areas from collection of centers
+
+  Args:
+    - points - collection of points
+    - centers - collection of centers
+    - resources - collection of resources
+    - numbers - numbers "
   [points centers resources numbers]
-  (map #(create-area % points resources numbers) centers))
+  (map #(create-area % points resources numbers) centers))  ; do create-area from centers
 (defn coords-in-roads?
+  "Check if given coordinates are part of any road owned by the specified player.
+  This function will be important to know can we build roads in game, if coords of wanted roads for build is in built settlement, than we will be able to build road
+   Args:
+    - coords: a coordinate pair (e.g. [x y]) to check
+    - player-name: the name (string) of the player whose roads to check
+    - state: an atom or map containing the game state, which includes players and their roads"
   [coords player-name state]
-  (let [roads (:roads (first (filter #(= (:name %) player-name) (:players @state))))]
-    (some (fn [[a b]]
-            (or (= coords a) (= coords b)))
+  (let [roads (:roads (first (filter #(= (:name %) player-name) (:players @state))))] ; take a list of roads for players with name same as arg player-name form state
+    (some (fn [[a b]]                                       ;check does it any spot in any coords same as in any road
+            (or (= coords a) (= coords b)))                 ;for each road with cords [a b] check does it coords overlaping with a or b
           roads)))
+
+
 (defn coords-in-settlement-or-roads?
   [coords player-name state]
   (let [player (first (filter #(= (:name %) player-name) (:players @state)))
@@ -273,10 +297,14 @@
                               v))
                           players))))
       )))
+
 (defn get-dice-image-url
+  "Return image depends on dice number
+
+  Args: dice-number - number between 1-6 get on dice"
   [dice-number]
-  "get image depends on dice number"
   (str "file:resources/static/dice-" dice-number ".png"))
+
 (defn update-winner [state view]
   (let [players (:players @state)
         winner-player (some (fn [player]
@@ -310,19 +338,28 @@
                      (update player :hand into (vec (take-resources coordinates number state)))
                      :else player))
                  players))))
+
 (defn player-turn-inc
+  "Function that increments the player's ordinal number so that we know who has the move,
+  if the last player plays then the next player with ordinal number 1
+  Args:
+    - number - what is index of player who play
+    - num-player - count of players"
   [number num-players]
-  "function that increments the player's ordinal number so that we know who has the move,
-  if the last player plays then the next player with ordinal number 1"
-  (if (= number num-players)
+  (if (= number num-players)                                ;if index of player is same as number of players, return 1, because if 4 players playing and 4th player is in on turn, if we want to end turn and go on next, this will not return 5, it will return 1
     1
-    (inc number))
+    (inc number))                                           ;inc number (index of player)
   )
+
 (defn player-turn-dec
-  [number]
   "function that increments the player's ordinal number so that we know who has the move,
-  if the last player plays then the next player with ordinal number 1"
+  if the last player plays then the next player with ordinal number 1
+
+  Args: number - number for decreasing"
+  [number]
+
   (dec number))
+
 (defn take-development-card [state]
   (let [player-idx (dec (:player-turn @state))
         chosen (rand-nth (:development-deck @state))]
