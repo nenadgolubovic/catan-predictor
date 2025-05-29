@@ -5,54 +5,82 @@
 
 (defn roads
   "Def pairs of spots which make a road, distance is 1 between 2 spots always
-  Args: points"
+
+  Args: points - a collection of points from which paths are made that are 1 distance apart"
   [points]
   (mapcat (fn [n1]                                          ;mapcat for flattens  all pairs
             (map (fn [n2] [n1 n2])                          ;for each n2 looking for n1 which is on distance 1.000 from n2
                  (filter #(= 1.000 (utils/distance-1-2 n1 %)) points))) ;take all point (n1) from points and calculate distance of 1.000
           points))
-
 (defn make-ring-area-centers
+  "This function calculate centers of hexagons on ring
+
+  Args:
+  x - x-axis value
+  y - y-axis value
+  r - radius "
   [x y r]
-  "This function calculate centers of hexagons on ring"
-  (distinct
-    (utils/round-seq
+  (distinct                                                 ;take only unique values
+    (utils/round-seq                                        ; round on 3 spot
       (map (fn [k]
-             [(+ x (* r (utils/fcos1 k))) (+ y (* r (utils/fsin1 k)))]) [0 1 2 3 4 5]
+             [(+ x (* r (utils/fcos1 k))) (+ y (* r (utils/fsin1 k)))]) [0 1 2 3 4 5] ;for k elements [0 1 2 3 4 5] calculate function X = x+r*cos(k) Y= y+r*cos(k)
            ) 3))
+  ;on this way function will calculate spots of hexagons, but not area hexagon, hexagons of centers. Centers of new hexagons,
+  ; wraper of initial area is also hexagon , because centers of wraper hexagons is on 0, 60, 120, 180, 240, 300 degrees (k*pi/3) - in fcos1 and fsin1, in relation to initial center
+  ;
   )
 (defn make-centers
+  "This function make centers for full board
+
+  Args: points - collection of points"
   [points]
-  "This function make centers for full board"
-  (distinct
-    (utils/round-seq
+  (distinct                                                 ;only unique values takes
+    (utils/round-seq                                        ;round on 3 decimals
       (mapcat #(make-ring-area-centers (first %) (second %) 1.732) points)
+      ;map and concat all elements from points, use make-ring-area-centers to take first and second
+      ; element of spots and calculate 1.732 (1*2cos0) distance from there and put center on that spot
       3))
   )
-(defn spots [[x y] ks]
-  "I will make function which make hexagon area"
-  (distinct
-    (utils/round-seq
-      (map (fn [k]
-             [(+ x (utils/fcos k)) (+ y (utils/fsin k))])
+(defn spots
+  "I will make function which make hexagon area
+
+  Args:
+  [x y] - collection of x value and y value
+  ks - collection of numbers
+  "
+
+  [[x y] ks]
+  (distinct                                                 ; unique values return
+    (utils/round-seq                                        ;round on 3
+      (map (fn [k]                                          ;
+             [(+ x (utils/fcos k)) (+ y (utils/fsin k))])   ;return x and y values of all spots in hexagons with formula cos(1+2k*PI/6) and sin(1+2k*PI/6)
            ks) 3)))
 (defn make-spots-from-centers
+  "This function makes spots of hexagons from provided centers
+
+  Args: centers - collection of points (centers of hexagons)"
   [centers]
-  "This function makes spots of hexagons from provided centers"
   (distinct
     (utils/round-seq
-      (mapcat #(spots [(first %) (second %)] [0 1 2 3 4 5])
+      (mapcat #(spots [(first %) (second %)] [0 1 2 3 4 5]) ;calculate spots for each provided coords of center, centers is in format [x y], because of that we use first and second
               centers)
       3)))
 (defn remove-card
+  "Select type of cards and delete one from hand
+
+  Args:
+    - cards-type -> type of card which want to be deleted
+    - hand -> collection of cards"
   [cards-type hand]
-  "Select type of cards and delete one from hand"
-  (let [hand (vec hand)
-        index (some #(when (= (second %) cards-type) (first %))
-                    (map-indexed vector hand))]
-    (if index
+  (let [hand (vec hand)                                     ;make vector from hand collection
+        index (some #(when (= (second %) cards-type) (first %)) ; find index of first element which card-type is same as
+                    (map-indexed vector hand))]             ; return hand as collection of [index element]
+    (if index                                               ;if index not nil (if elements existing in hand)
       (vec (concat (subvec hand 0 index) (subvec hand (inc index))))
+      ;return vector of combined 2 subvec (first is from beginning to index, and after index)  on that way are secured that take all elements instead of element with provided index
       hand)))
+
+
 (defn remove-n-cards
   [type-card hand n]
   (loop [hand hand
