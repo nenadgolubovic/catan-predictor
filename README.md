@@ -488,6 +488,8 @@ new development cards will be added to offer players even more strategic options
 
 [8] *ClojureScript – Testing*, available at: [https://clojurescript.org/tools/testing](https://clojurescript.org/tools/testing)
 
+[9] *Midje documentation, available at: [https://cljdoc.org/d/midje/midje/1.10.10/api/midje.doc](https://cljdoc.org/d/midje/midje/1.10.10/api/midje.doc)
+
 ## License
 
 Copyright © 2025 FIXME

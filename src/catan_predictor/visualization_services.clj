@@ -181,68 +181,81 @@
     (some (fn [[a b]]                                       ;check does it any spot in any coords same as in any road
             (or (= coords a) (= coords b)))                 ;for each road with cords [a b] check does it coords overlaping with a or b
           roads)))
-
-
 (defn coords-in-settlement-or-roads?
+  "Function return true if passed coords is in roads or settlement in passed :player
+
+  Args:
+    - coords - coordinates on board
+    - player-name - name of players for whom we want to check does it have coords in settlement or roads
+    - state - state of the game"
   [coords player-name state]
-  (let [player (first (filter #(= (:name %) player-name) (:players @state)))
-        settlement (:settlement player)
-        roads (:roads player)]
+  (let [player (first (filter #(= (:name %) player-name) (:players @state))) ; player who is on turn (find for provided name all info of player in state)
+        settlement (:settlement player)                     ;settlements of player
+        roads (:roads player)]                              ;roads of player
     (some (fn [point]
-            (or (some #(= point %) settlement)
-                (some (fn [[a b]] (or (= point a) (= point b)))  roads)))
+            (or (some #(= point %) settlement)              ;check does coords is in settlement
+                (some (fn [[a b]] (or (= point a) (= point b)))  roads))) ;check does coords in roads
           coords)))
 (defn coords-in-last-settlement?
+  "Defined does coords passed coords last in :settlement of player,
+  This is important for player in initial phase of game, on that way game give opportunity for player to only build road nears to last settlement,
+  because by the rules of game, in initial phase you can only build roads nears to currently built settlement
+
+  Args:
+    - coords - coordinates
+    - player-name - name of player
+    - state - state of the game"
   [coords player-name state]
-  (let [player (first (filter #(= (:name %) player-name) (:players @state)))
-        last-settlement (last (:settlement player))]
-    (some #(= % last-settlement) coords)))
+  (let [player (first (filter #(= (:name %) player-name) (:players @state))) ;get player by provided name
+        last-settlement (last (:settlement player))]        ;last added to :settlement vector
+    (some #(= % last-settlement) coords)))                  ;true if coords already in settlement vector
+
+
+;not tested
 (defn build-settlement
+  "Build settlement on clicked spot if meet condition,
+  fill color of spot in color of player
+
+  Args:
+    - coords - clicked coords
+    - state - state of the game"
   [coords state]
-  (let [player (get (vec (:players @state)) (dec (:player-turn @state)))
-        player-idx (dec (:player-turn @state))
-        game-phase (= "Game" (:phase @state))]
-
+  (let [player (get (vec (:players @state)) (dec (:player-turn @state))) ; get map of player on turn
+        player-idx (dec (:player-turn @state))              ;index of player which is on turn
+        game-phase (= "Game" (:phase @state))]              ;condition, does it in game phase
     (when (or (not game-phase)
-              (coords-in-roads? coords (:name player) state))
-      (try
-        (swap! state update-in [:players player-idx :hand] buy-settlement)
-        (catch Exception e
-          (swap! state assoc :game-massage e)))
-
-      (swap! state update :spots
-             (fn [spots]
-               (mapv (fn [spot]
-                       (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
-                         (assoc spot :fill (:color player))
+              (coords-in-roads? coords (:name player) state)) ;do only if is not in game phase or if coords in roads
+      (swap! state update-in [:players player-idx :hand] buy-settlement) ;delete all cards from hand for buying settlement
+      (swap! state update :spots                            ;update :spots from state
+             (fn [spots]                                    ;do it for all spots
+               (mapv (fn [spot]                             ;return vector of (function element)
+                       (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords) ;if pressed coordinates is coords
+                         (assoc spot :fill (:color player)) ;fill spots with color of player (visualization of settlement)
                          spot))
                      spots)))
-
-      (swap! state update :players
-             (fn [players]
-               (into []
+      (swap! state update :players                          ;update players
+             (fn [players]                                  ;for each player
+               (into []                                     ;take into vector
                      (map (fn [v]
-                            (if (= (:name v) (:name player))
-                              (update v :settlement (fnil conj []) coords)
+                            (if (= (:name v) (:name player)) ; if name of player in args is same as player from players map
+                              (update v :settlement (fnil conj []) coords) ;even if vector is nil add coords to settlement of player
                               v))
                           players))))
-
       (swap! state assoc :game-massage "Successful build settlement" ))))
 (defn build-town
-  [coords state]
-  (let [player (get (vec (:players @state)) (dec (:player-turn @state)))
-        player-idx (dec (:player-turn @state))]
+  "Build town for player, change size of clicked spot and present view of town, double bigger circle
 
-    (if (some #(= coords %) (:settlement player))
+   Args:
+      - coords - clicked coords
+      - state - state of the game"
+  [coords state]
+  (let [player (get (vec (:players @state)) (dec (:player-turn @state))) ;map of player on turn
+        player-idx (dec (:player-turn @state))]             ;index of player on turn
+
+    (if (some #(= coords %) (:settlement player))           ;if coords in settlement only do it, because if settlement is not built, not possible to upgrade settlement to town
       (do
-        (try
-          (swap! state update-in [:players player-idx :hand] buy-town)
-          (catch Exception e
-            (println "No resource")))
-        (try
-          (swap! state update-in [:players player-idx :settlement] (fn [settlement] (remove #(= % coords) settlement)))
-          (catch Exception e
-            (println "Not your settlement")))
+          (swap! state update-in [:players player-idx :hand] buy-town) ;remove from hands 3 ores and 2 grain
+          (swap! state update-in [:players player-idx :settlement] (fn [settlement] (remove #(= % coords) settlement))) ; remove coords from player settlement
         (swap! state update :players
                (fn [players]
                  (into []
@@ -250,21 +263,23 @@
                               (if (= (:name v) (:name player))
                                 (update v :towns (fnil conj []) coords)
                                 v))
-                            players))))
+                            players))))                     ;add to coords to player :town vector
 
         (swap! state update :spots
                (fn [spots]
                  (mapv (fn [spot]
                          (if (= (:spot-coordinates (:on-mouse-clicked spot)) coords)
-                           (assoc spot :radius 20)
+                           (assoc spot :radius 20)          ;change radius of circle and present them on board as town
                            spot))
                        spots))))
-      (print "Not your settlement, you have to build settlement first, then town ")
       )
-
-
     ))
 (defn build-road
+  "Build road for player, change color of clicked road and present view of road of player
+
+ Args:
+    - coords - clicked coords
+    - state - state of the game"
   [coords state]
   (let [player (get (vec (:players @state)) (dec (:player-turn @state)))
         player-idx (dec (:player-turn @state))
@@ -272,13 +287,12 @@
 
     (when (or (and game-phase
                    (coords-in-settlement-or-roads? coords (:name player) state))
+              ; 1 of 2 condition have to be meet, or that is game phase and that coords is not in roads , or that is not game phase and coords are is in last settlement.
+              ; build in game phase if clicked road are connected with already existing settlement of player
               (and (not game-phase)
-                   (coords-in-last-settlement? coords (:name player) state)))
+                   (coords-in-last-settlement? coords (:name player) state))) ;built in initial phase only if roads start or end by last made settlement (rules of game
       (when game-phase
-        (try
-          (swap! state update-in [:players player-idx :hand] buy-road)
-          (catch Exception e
-            (swap! state assoc :game-massage e))))
+          (swap! state update-in [:players player-idx :hand] buy-road)) ; if game phase remove from hand brick and wood, if not, not have to be deleted, because in initial phase building road is free, so if player
 
       (swap! state update :roads
              (fn [roads]
@@ -298,47 +312,66 @@
                           players))))
       )))
 
+
+
+
 (defn get-dice-image-url
   "Return image depends on dice number
 
   Args: dice-number - number between 1-6 get on dice"
   [dice-number]
   (str "file:resources/static/dice-" dice-number ".png"))
+(defn update-winner
+  "Update winner in state atom, if some player have 10 vp or more state change view and game finish
 
-(defn update-winner [state view]
-  (let [players (:players @state)
+  Args:
+    - state - state of the game
+    - view - end view"
+  [state view]
+  (let [players (:players @state)                           ; collection of players
         winner-player (some (fn [player]
                               (when (>= (:vp player) 10)
                                 (:name player)))
-                            players)]
-    (if winner-player
-      (swap! state assoc
+                            players)]                       ;define winner-player as first player who have 10 vp or more from players
+    (if winner-player                                       ;if winner-player is not nil
+      (swap! state assoc                                    ;change :winner in state with name of player who first reach 10 vps
              :winner winner-player
-             :fx/type view)
+             :fx/type view)                                 ;swap view to view args (in game end view)
       @state)))
-(defn take-resources [coords number state]
+(defn take-resources
   "function which from board when you pass coordinates of one spots and number and extract info of resources
-  connected with that spot"
-  (map :resource
+  connected with that spot
+
+  Args:
+    - coords - coordinates of center of area
+    - number - number of area
+    - state - state of the game "
+  [coords number state]
+  (map :resource                                            ;take resources for all areas which represented by a given number
        (filter (fn [area]
-                 (some (fn [spot] (= coords spot)) (:spots area)))
-               (filter #(= (str number) (:number %)) (:areas @state))
+                 (some (fn [spot] (= coords spot)) (:spots area))) ; return spot from areas extracted which is same as args coords
+               (filter #(= (str number) (:number %)) (:areas @state)) ; return all areas which have :numbers same as arg number
                )))
 (defn filing-hand-with-resource [coordinates number state]
   "Players who have a settlement or town on the coordinates get the resources.
-   Towns give double resources."
-  (swap! state update :players
+   Towns give double resources. Filling hand with returned resources
+
+   Args:
+    - coordinates - coordinates
+    - number - number from dice
+    - state - state of the game"
+  [coordinates number state]
+  (swap! state update :players                              ;update players map from state
          (fn [players]
-           (mapv (fn [player]
-                   (cond
-                     (some #{coordinates} (:towns player))
+           (mapv (fn [player]                               ;map all functions and return vector
+                   (cond (some #{coordinates} (:towns player)) ;if coordinates in :towns of player
                      (update player :hand into (vec (concat (take-resources coordinates number state)
                                                             (take-resources coordinates number state))))
+                         ;update hand of player  who has in :towns have coordinates passed in functions, return hands which have additional got resources two times
                      (some #{coordinates} (:settlement player))
-                     (update player :hand into (vec (take-resources coordinates number state)))
-                     :else player))
+                     (update player :hand into (vec (take-resources coordinates number state))) ;update hand of player who in :settlement have coords passed in function, return hand which have one additional resource
+                     :else player))                         ; if noting not fulfilled of condition, return player (no updates)
                  players))))
-
 (defn player-turn-inc
   "Function that increments the player's ordinal number so that we know who has the move,
   if the last player plays then the next player with ordinal number 1
@@ -350,7 +383,6 @@
     1
     (inc number))                                           ;inc number (index of player)
   )
-
 (defn player-turn-dec
   "function that increments the player's ordinal number so that we know who has the move,
   if the last player plays then the next player with ordinal number 1
@@ -359,18 +391,25 @@
   [number]
 
   (dec number))
+(defn take-development-card
+  "Take development card from development deck
 
-(defn take-development-card [state]
-  (let [player-idx (dec (:player-turn @state))
-        chosen (rand-nth (:development-deck @state))]
-    (swap! state update :development-deck #(remove-card chosen %))
-    (swap! state update-in [:players player-idx :dev-cards] #(conj % chosen))
-    (swap! state update-in [:players player-idx :hand] buy-development-card)
-    (println "Chosen card:" chosen)))
+  Args : state - state of the game"
+  [state]
+  (let [player-idx (dec (:player-turn @state))              ;index of player (if on turn is 3 ( that is means that player-idx is 2) because started with 0 (not 1)
+        chosen (rand-nth (:development-deck @state))]       ;random card from :development deck of state
+    (swap! state update :development-deck #(remove-card chosen %)) ;remove returned card from development deck of state
+    (swap! state update-in [:players player-idx :dev-cards] #(conj % chosen)) ;add development card to player who is on turn, who bought card
+    (swap! state update-in [:players player-idx :hand] buy-development-card) ;removed cards from hand (ore, wool, grain)
+    ))
 (defn add-edge
+  "Downloaded from [7]
+  Make edges in graph"
   [graph node neighbor]
   (update graph node (fnil conj []) neighbor))
 (defn build-graph
+  "Downloaded from [7]
+  Args: edges - all edges connections of 2 spots"
   [edges]
   (reduce (fn [g [a b]]
             (-> g
@@ -379,6 +418,14 @@
           {}
           edges))
 (defn find-all-paths
+  "Downloaded from [7]
+
+  Args:
+    - graph: a map representing the graph, where keys are nodes and values are collections (e.g., vectors) of neighboring nodes.
+    - start: the node from which to start the path search.
+    - end: the target node where paths should end.
+    - path (optional): a list of nodes representing the current path (used internally during recursion)."
+
   [graph start end & [path]]
   (let [path (conj (or path []) start)]
     (if (= start end)
@@ -389,82 +436,115 @@
                      :when (not (some #(= % node) path))]
                  (find-all-paths graph node end path)))))))
 (defn longest-path
+  "find the longest path of provided paths
+
+  Args: path - all collection of paths"
+
   [paths]
-  (reduce
-    (fn [longest path]
-      (if (> (count path) (count longest))
-        path
-        longest))
+  (reduce                                                   ;pass through all path
+    (fn [longest path]                                      ;take first element as longest, and go on next
+      (if (> (count path) (count longest))                  ;if number of elements in next path is bigger then longest
+        path                                                ;return path
+        longest))                                           ;otherwise return longest
     []
     paths))
+
+
 (defn longest-route-length
-  "Based on DFS algorithm and graphs teory [7] "
+  "Based on DFS algorithm and graphs teory [7]
+
+  Args: roads - number of roads"
   [roads]
-  (let [graph (build-graph roads)
-        nodes (keys graph)
+  (let [graph (build-graph roads)                           ;build graph of roads
+        nodes (keys graph)                                  ;take nodes as keys of graph
         all-paths (for [start nodes
                         end nodes
                         :when (not= start end)]
-                    (find-all-paths graph start end))
-        flat-paths (apply concat all-paths)
-        longest (longest-path flat-paths)]
-    (max 0 (dec (count longest)))))
-(defn update-players-vp [state]
-  (let [winner-longest-route (:winner-longest-route @state)
-        winner-army-size (:winner-army-size @state)]
-    (swap! state update :players
+                    (find-all-paths graph start end))       ;find all parts
+        flat-paths (apply concat all-paths)                 ;merge all path into one vec
+        longest (longest-path flat-paths)]                  ;longest route
+    (max 0 (dec (count longest)))))                         ;return longest ( count of elements of routes)
+
+
+(defn update-players-vp
+  "Calculate all victory points for all players
+
+  Args: state - state of the game"
+  [state]
+  (let [winner-longest-route (:winner-longest-route @state) ;take winner-longest-route from state, name of winner
+        winner-army-size (:winner-army-size @state)]        ;take winner-army-size route from state, name of winner
+    (swap! state update :players                            ;update players
            (fn [players]
              (vec
                (map-indexed
                  (fn [idx player]
-                   (let [count-settlement (count (:settlement player))
-                         count-towns (* 2 (count (:towns player)))
-                         vp-cards (count (filter #(= % "victory-point") (:dev-cards player)))
-                         longest-route (if (= (:name player) winner-longest-route) 2 0)
-                         biggest-army (if (= (:name player) winner-army-size) 2 0)
-                         total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)]
-                     (assoc player :vp total-vp)))
+                   (let [count-settlement (count (:settlement player)) ;count of settlement (that is return 1 vp per settlement, number  of settlement = vp
+                         count-towns (* 2 (count (:towns player))) ;all towns return 2 vp, count number of elements in :town and multiply by 2
+                         vp-cards (count (filter #(= % "victory-point") (:dev-cards player))) ; count all "victory-point" development cards from dev-cards of player, count number of cards drawn from the development-deck
+                         longest-route (if (= (:name player) winner-longest-route) 2 0) ;give 2 vp to player who has the longest route, if name of player is same as name of winner-longest route return 2 vp, if not 0
+                         biggest-army (if (= (:name player) winner-army-size) 2 0) ;give 2 vp to player who has the biggest army, if name of player is same as name of winner-longest route return 2 vp, if not 0
+                         total-vp (+ count-settlement count-towns vp-cards longest-route biggest-army)] ; total number is sum of above
+                     (assoc player :vp total-vp)))          ;add :vp to all players depends on state of them
                  players))))))
-(defn update-current-player-road-length! [state]
-  (let [player-idx (dec (:player-turn @state))
-        path [:players player-idx :road-length]]
-    (swap! state assoc-in path
-           (longest-route-length (get-in @state [:players player-idx :roads])))
+(defn update-current-player-road-length!
+  "Update lenght of players
+
+  Args: state - state of the game "
+  [state]
+  (let [player-idx (dec (:player-turn @state))              ; take index of player on turn
+        path [:players player-idx :road-length]]            ; path to road-length of player on turn
+    (swap! state assoc-in path                              ; change road length of player
+           (longest-route-length (get-in @state [:players player-idx :roads]))) ; depends on all roads of player on turn
     )
   )
-(defn player-with-longest-route [state]
-  (let [players (:players @state)
-        current-winner-name (:winner-longest-route @state)
-        current-winner (some #(when (= (:name %) current-winner-name) %) players)
-        current-winner-length (or (:road-length current-winner) 0)
-        max-player (apply max-key #(or (:road-length %) 0) players)
-        max-length (or (:road-length max-player) 0)]
-    (when (>= max-length 3)
-      (when (> max-length current-winner-length)
-        (swap! state assoc :winner-longest-route (:name max-player))
+(defn player-with-longest-route
+  "Calculate player with the longest route, if some already there with the longest route,
+  player who have 1 or more longer than route of him, could take in advantage and be a winner
+
+  Args: state - state of the game"
+  [state]
+  (let [players (:players @state)                           ; take all players
+        current-winner-name (:winner-longest-route @state)  ; return name of winner with the longest route
+        current-winner (some #(when (= (:name %) current-winner-name) %) players) ;get map of current winner
+        current-winner-length (or (:road-length current-winner) 0) ;calculate length of route of current winner
+        max-player (apply max-key #(or (:road-length %) 0) players) ;return player with the longest route
+        max-length (or (:road-length max-player) 0)]        ;calculate route of player with the longest route
+    (when (>= max-length 3)                                 ; if length 3 or bigger
+      (when (> max-length current-winner-length)            ;if max-length longer than length of winner (not if equal)
+        (swap! state assoc :winner-longest-route (:name max-player)) ;winner of longest route is player who have 1 or more bigger route that current winner
         ))))
-(defn player-with-largest-army [state]
-  (let [players (:players @state)
-        current-winner-name (:winner-army-size @state)
-        current-winner (some #(when (= (:name %) current-winner-name) %) players)
-        current-winner-size (or (:army-size current-winner) 0)
-        max-player (apply max-key #(or (:army-size %) 0) players)
-        max-size (or (:army-size max-player) 0)]
-    (when (>= max-size 3)
-      (when (> max-size current-winner-size)
-        (swap! state assoc :winner-army-size (:name max-player))))))
-(defn update-all-hands-second-half [state]
+(defn player-with-largest-army
+  "Calculate player with the biggest army, if some already there with the biggest army,
+  player who have 1 or more bigger army than army of him, could take in advantage and be a winner of army.
+  Army is number of activated knights
+
+  Args: state - state of the game"
+  [state]
+  (let [players (:players @state)                           ; take all players
+        current-winner-name (:winner-army-size @state)      ; return name of winner with the biggest army
+        current-winner (some #(when (= (:name %) current-winner-name) %) players) ; get map of current winner
+        current-winner-size (or (:army-size current-winner) 0) ;calculate length of route of current winner
+        max-player (apply max-key #(or (:army-size %) 0) players);;return player with the longest route
+        max-size (or (:army-size max-player) 0)]            ;calculate route of player with the longest route
+    (when (>= max-size 3)                                   ; if length 3 or bigger
+      (when (> max-size current-winner-size)                ;if max-length longer than length of winner (not if equal)
+        (swap! state assoc :winner-army-size (:name max-player)))))) ;winner of longest route is player who have 1 or more bigger route that current winner
+(defn update-all-hands-second-half
+  " This function divides in half and removes half of the total number of resources, the cards are shuffled to remove them randomly
+
+  Args: state - state of the game"
+  [state]
   (swap! state
          (fn [state]
-           (let [players (:players state)]
-             (let [updated-players
-                   (mapv (fn [player-map]
-                           (let [hand (:hand player-map)
-                                 new-hand (if (> (count hand) 7)
-                                            (let [shuffled (shuffle hand)
-                                                  half (quot (count shuffled) 2)]
-                                              (drop half shuffled))
-                                            hand)]
-                             (assoc player-map :hand new-hand)))
+           (let [players (:players state)]                  ; return list of players
+             (let [updated-players                          ; return new players
+                   (mapv (fn [player-map]                   ; make a vector of new players (function applied to all in collection of players)
+                           (let [hand (:hand player-map)    ; hand of player
+                                 new-hand (if (> (count hand) 7) ;if you have more than 7 cards
+                                            (let [shuffled (shuffle hand) ;shuffle hand
+                                                  half (quot (count shuffled) 2)] ;half is first half
+                                              (drop half shuffled)) ;keep the rest
+                                            hand)]          ;otherwise if is not more than 7 resource, do nothing
+                             (assoc player-map :hand new-hand))) ;change hand for all players who have more than 7
                          players)]
-               (assoc state :players updated-players))))))
+               (assoc state :players updated-players))))))  ;update state with new players
