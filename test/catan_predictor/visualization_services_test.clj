@@ -269,6 +269,12 @@
      (services/longest-path  []) => []
      (services/longest-path  [[1]]) => [1]
       (services/longest-path [[1 2] [3 4]]) => [1 2]) ; if is same length, return first
+(fact "longest-route-length returns correct length for simple chain"
+      (let [roads [[[0.0 1.0] [1.0 2.0]]
+                   [[1.0 2.0] [3.0 4.0]]
+                   [[4.0 5.0] [3.0 4.0]]]]
+        (services/longest-route-length roads)
+        => 3)) ; cuz nodes A-B-C-D, path 3 (4 nodes - 1)
 (fact "update-players-vp calculate victory point of each player"
       (let [state (atom {:players [{:name "A"
                                     :settlement [[0 1.2] [2.32 -5] ["a" "b"]]  ; 3 settlements = 3 VP

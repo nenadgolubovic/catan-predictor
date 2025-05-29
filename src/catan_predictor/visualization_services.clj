@@ -448,8 +448,6 @@
         longest))                                           ;otherwise return longest
     []
     paths))
-
-
 (defn longest-route-length
   "Based on DFS algorithm and graphs teory [7]
 
@@ -464,8 +462,6 @@
         flat-paths (apply concat all-paths)                 ;merge all path into one vec
         longest (longest-path flat-paths)]                  ;longest route
     (max 0 (dec (count longest)))))                         ;return longest ( count of elements of routes)
-
-
 (defn update-players-vp
   "Calculate all victory points for all players
 
