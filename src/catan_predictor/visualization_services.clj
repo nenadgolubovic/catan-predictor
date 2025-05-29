@@ -79,26 +79,45 @@
       (vec (concat (subvec hand 0 index) (subvec hand (inc index))))
       ;return vector of combined 2 subvec (first is from beginning to index, and after index)  on that way are secured that take all elements instead of element with provided index
       hand)))
-
-
 (defn remove-n-cards
+  "Remove n numbers of element of cards
+  Args:
+    - type-card - resource
+    - hand - collection of resources
+    - n - number of elements which want to removed"
   [type-card hand n]
-  (loop [hand hand
-         n n]
-    (if (< 0 n)
-      (recur (remove-card type-card hand) (dec n))
-      hand)))
-(defn buy-settlement [hand]
-  (remove-n-cards "wood" (remove-n-cards "brick" (remove-n-cards "wool" (remove-n-cards "grain" hand 1) 1) 1) 1) )
+  (loop [hand hand                                          ; current state of hand
+         n n]                                               ; number of cards which have to be removed
+    (if (< 0 n)                                             ; do if n is 0 or higher
+      (recur (remove-card type-card hand) (dec n))          ; remove card with is same as arg "type-card" and reduce n by 1
+      hand)))                                               ;if n is <=0 return hand
+(defn buy-settlement
+  "Update hand with buying settlement, reduce resource brick wood wool and grain by one
+
+  Args: hand - collection of resource"
+  [hand]
+  (remove-n-cards "wood" (remove-n-cards "brick" (remove-n-cards "wool" (remove-n-cards "grain" hand 1) 1) 1) 1) ) ; remove all of them by 1
 (defn buy-town
+  "Update hand with buying town, reduce resource 2 grain and 3 ores
+
+  Args: hand - collection of resource"
   [hand]
   (remove-n-cards "ore" (remove-n-cards "grain" hand 2) 3))
 (defn buy-road
+  "Update hand with buying road, reduce resource 1 wood and 1 brick
+
+  Args: hand - collection of resource"
   [hand]
   (remove-n-cards "wood" (remove-n-cards "brick" hand 1) 1))
 (defn buy-development-card
+  "Update hand with buying development card, reduce resource 1 grain and 1 ore and 1 wool
+
+  Args: hand - collection of resource"
   [hand]
   (remove-n-cards "grain" (remove-n-cards "ore" (remove-n-cards "wool" hand 1) 1) 1))
+
+
+
 (defn remove-once
   [item coll]
   "split collection on before(all before item appear) and after (from first appear item to end of collection)
