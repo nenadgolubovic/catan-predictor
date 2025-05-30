@@ -4,7 +4,11 @@
             [catan-predictor.visualization-elements :as elem]
             [catan-predictor.visualization-services :as services]
             )
-  (:import  [javafx.stage Screen]))
+  (:import  [javafx.stage Screen]
+            [javafx.scene.paint Color]
+            [javafx.scene.layout Background ]
+            [javafx.scene.paint Color]
+            [javafx.scene.paint ImagePattern]))
 
 ;; ============================================================================
 ;; This project is based on the board game Catan [1] [2].

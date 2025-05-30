@@ -167,6 +167,78 @@
         (services/coords-in-roads? [4 4] "B" state) => true
         (services/coords-in-roads? [6 6] "B" state) => nil
         (services/coords-in-roads? [0 0] "C" state) => nil))
+(fact "build-town updates the game state correctly when upgrading a settlement to a town"
+      (let [initial-state (atom
+                            {:player-turn 1
+                             :players [{:name "player1"
+                                        :hand {:ore 3 :grain 2 :other 5}
+                                        :settlement [[1 1] [2 2]]
+                                        :towns []}
+                                       {:name "player2"
+                                        :hand {:ore 5 :grain 5}
+                                        :settlement [[3 3]]
+                                        :towns []}]
+                             :spots [{:on-mouse-clicked {:spot-coordinates [1 1]} :radius 10}
+                                     {:on-mouse-clicked {:spot-coordinates [2 2]} :radius 10}
+                                     {:on-mouse-clicked {:spot-coordinates [3 3]} :radius 10}]})
+            coords [1 1]]
+        (services/build-town coords initial-state)
+        (not-any? #(= coords %) (get-in @initial-state [:players 0 :settlement])) => true ;Check that the settlement at coords is removed
+        (some #(= coords %) (get-in @initial-state [:players 0 :towns])) => true ;Check that the coords are added to towns
+        (let [spots (:spots @initial-state)                 ;Find the spot with matching coordinates
+              matching-spot (first (filter #(= (:spot-coordinates (:on-mouse-clicked %)) coords) spots))
+              updated-radius (:radius matching-spot)]
+          (= updated-radius 20)) => true
+        (not= {:ore 3 :grain 2 :other 5} (get-in @initial-state [:players 0 :hand])) => true)) ;Check that the player's hand has changed (since buy-town is not mocked)
+(fact "build-settlement updates game state correctly when building settlement during game phase"
+      (let [initial-state (atom
+                            {:phase "Game"
+                             :player-turn 1
+                             :players [{:name "player1"
+                                        :hand {:brick 1 :wood 1 :grain 1 :sheep 1}
+                                        :settlement []
+                                        :color "red"}
+                                       {:name "player2"
+                                        :hand {:brick 2 :wood 2}
+                                        :settlement []
+                                        :color "blue"}]
+                             :spots [{:on-mouse-clicked {:spot-coordinates [1 1]} :fill "white"}
+                                     {:on-mouse-clicked {:spot-coordinates [2 2]} :fill "white"}]})
+            coords [1 1]]
+
+        (with-redefs [services/coords-in-roads? (fn [_ _ _] true)] ;  coords-in-roads? to always return true for testing settlement build logic.
+          (services/build-settlement coords initial-state)
+          (:fill (first (filter #(= (:spot-coordinates (:on-mouse-clicked %)) coords)
+                                (:spots @initial-state)))) => "red" ;color to red
+          (some #(= coords %) (get-in @initial-state [:players 0 :settlement])) => true ; coords in settlements
+          (not= {:brick 1 :wood 1 :grain 1 :sheep 1}
+                (get-in @initial-state [:players 0 :hand])) => true ;spend resources
+          (:game-massage @initial-state) => "Successful build settlement"))) ;message
+(fact "build-road updates game state correctly when building a road during game phase"
+      (with-redefs [services/coords-in-settlement-or-roads?
+                    (fn [coords player-name state]
+                      (or (= coords [[-1.541 0.000] [0.265 0.541]])
+                          (= coords [[0.265 0.541] [-1.541 0.000]])))] ;coords in settlement in road
+        (let [initial-state (atom
+                              {:phase "Game"
+                               :player-turn 1
+                               :players [{:name "player1"
+                                          :hand {:brick 1 :wood 1 :other 3}
+                                          :roads []
+                                          :color "red"}
+                                         {:name "player2"
+                                          :hand {:brick 2 :wood 2}
+                                          :roads []
+                                          :color "blue"}]
+                               :roads [{:on-mouse-clicked {:road-coordinates [[-1.541 0.000] [0.265 0.541]]} :stroke "gray"}
+                                       {:on-mouse-clicked {:road-coordinates [[12.21 12.2] [321.2 432.1]]} :stroke "gray"}]})
+              coords [[-1.541 0.000] [0.265 0.541]]]
+          (services/build-road coords initial-state)
+          (let [roads (:roads @initial-state)
+                updated-road (first (filter #(= (:road-coordinates (:on-mouse-clicked %)) coords) roads))]
+            (:stroke updated-road)) => "red"                ;check does change collor
+          (some #(= coords %) (get-in @initial-state [:players 0 :roads])) => true ;added to player roads
+          (not= {:brick 1 :wood 1 :other 3} (get-in @initial-state [:players 0 :hand])) => true))) ; hand updated (resources spent)
 (fact "get-dice-image-url returns correct image URL for dice number"
       (services/get-dice-image-url 2) => "file:resources/static/dice-2.png"
       (services/get-dice-image-url 3) => "file:resources/static/dice-3.png"

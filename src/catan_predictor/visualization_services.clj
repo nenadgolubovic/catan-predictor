@@ -210,7 +210,6 @@
         last-settlement (last (:settlement player))]        ;last added to :settlement vector
     (some #(= % last-settlement) coords)))                  ;true if coords already in settlement vector
 
-
 ;not tested
 (defn build-settlement
   "Build settlement on clicked spot if meet condition,
@@ -242,6 +241,7 @@
                               v))
                           players))))
       (swap! state assoc :game-massage "Successful build settlement" ))))
+
 (defn build-town
   "Build town for player, change size of clicked spot and present view of town, double bigger circle
 
@@ -311,10 +311,6 @@
                               v))
                           players))))
       )))
-
-
-
-
 (defn get-dice-image-url
   "Return image depends on dice number
 
